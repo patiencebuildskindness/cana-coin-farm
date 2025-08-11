@@ -26,6 +26,12 @@
       </div>
     </section>
 
+    <!-- XP card -->
+    <section class="card" id="xpCard" style="display:none">
+      <b>XP:</b> <span id="xpVal">0</span>
+      <span id="badgeWrap" style="margin-left:8px;"></span>
+    </section>
+
     <section id="list" class="grid"></section>
 
     <footer class="footer">
@@ -37,19 +43,50 @@
     <div class="mini card">
       <div class="name"></div>
       <div class="latin"></div>
-      <button class="btn learn">I learned this (+1 XP soon)</button>
+      <button class="btn learn">I learned this (+1 XP)</button>
     </div>
   </template>
 
   <script>
     const tg = window.Telegram?.WebApp; if (tg) tg.expand();
+    const initData = tg?.initData || '';
+
     const list = document.getElementById('list');
     const cardTpl = document.getElementById('plant-card');
     const refreshBtn = document.getElementById('refresh');
     const closeBtn = document.getElementById('close');
     const q = document.getElementById('q');
+    const xpCard = document.getElementById('xpCard');
+    const xpVal = document.getElementById('xpVal');
+    const badgeWrap = document.getElementById('badgeWrap');
 
     let plants = [], visible = [];
+
+    async function getXP(){
+      const r = await fetch('/api/xp/get', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-TG-Init-Data': initData },
+        body: JSON.stringify({ initData })
+      });
+      return r.json();
+    }
+    async function incXP(){
+      const r = await fetch('/api/xp/inc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-TG-Init-Data': initData },
+        body: JSON.stringify({ initData })
+      });
+      return r.json();
+    }
+
+    async function loadXP() {
+      const s = await getXP();
+      if (s.ok) {
+        xpCard.style.display = 'block';
+        xpVal.textContent = s.xp;
+        badgeWrap.textContent = (s.badges || []).join(' • ');
+      }
+    }
 
     async function loadPlants(){
       const r = await fetch('/api/plants');
@@ -66,11 +103,26 @@
 
     function render(){
       list.innerHTML = '';
-      visible.slice(0, 100).forEach(p => {
+      visible.slice(0, 120).forEach(p => {
         const node = cardTpl.content.cloneNode(true);
         node.querySelector('.name').textContent = p.common_name || 'Unknown common name';
         node.querySelector('.latin').textContent = p.scientific_name || '';
-        node.querySelector('.learn').onclick = () => alert('XP +1 coming soon (earn-to-learn)');
+        node.querySelector('.learn').onclick = async () => {
+          const data = await incXP();
+          if (data.ok) {
+            xpCard.style.display = 'block';
+            xpVal.textContent = data.xp;
+            badgeWrap.textContent = (data.badges || []).join(' • ');
+            const justUnlocked = (data.badges || []).slice(-1)[0];
+            if (justUnlocked && data.xp === 5) {
+              alert('+1 XP!\nBadge unlocked: Mint Keeper 🌿');
+            } else {
+              alert(`+1 XP! Total: ${data.xp}`);
+            }
+          } else {
+            alert('Could not save XP (alpha).');
+          }
+        };
         list.appendChild(node);
       });
     }
@@ -79,6 +131,8 @@
     closeBtn.onclick = () => tg && tg.close();
     q.oninput = filter;
 
+    // Init
+    loadXP();
     loadPlants();
   </script>
 </body>
