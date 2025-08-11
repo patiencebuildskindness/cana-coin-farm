@@ -9,5 +9,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "telegraf": "^4.16.3"
+    "csvtojson": "^2.0.10"
+
   }
 }
