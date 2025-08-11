@@ -27,3 +27,33 @@
 .plot.s2{background:linear-gradient(180deg,#0ea76a,#0c4a2f)}
 .plot.s3{background:linear-gradient(180deg,#34d399,#0ea76a)}
 @media (max-width:900px){.grid2{grid-template-columns:1fr}}
+:root{
+  --bg:#042315;--panel:#0a3d26;--line:#145c3a;--text:#e6ffe6;--accent:#4ade80;--muted:#9ae6b4;
+}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,Segoe UI,Roboto,Arial}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.logo{width:48px;height:48px}.titles h1{margin:0;font-size:24px}.subtitle{margin:2px 0 0;color:var(--muted);font-size:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:280px 1fr 280px;gap:12px}
+.panel h3{margin:0 0 8px}
+.btn{display:inline-block;background:var(--accent);color:#042;padding:8px 12px;border-radius:10px;text-decoration:none;font-weight:700;border:none;cursor:pointer}
+.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--line)}
+.input, select{flex:1;min-width:160px;background:#063321;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.footer{margin-top:8px;color:var(--muted)}
+.muted{color:var(--muted);font-size:12px}
+.seeds{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto}
+.seed{padding:8px;border:1px solid var(--line);border-radius:10px;background:#0b3a25;cursor:pointer}
+.seed:hover{outline:1px solid var(--accent)}
+.farm{--n:6;display:grid;grid-template-columns:repeat(var(--n),1fr);gap:6px}
+.plot{height:78px;border:1px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;background:#07311f;text-align:center;padding:2px}
+.plot .empty{opacity:.6}
+.plot .plant{font-size:12px}
+.plot .st{position:absolute;bottom:4px;right:6px;font-size:11px;opacity:.8}
+.plot.selected{outline:2px solid var(--accent)}
+.plot.s1{background:linear-gradient(180deg,#0c4a2f,#07311f)}
+.plot.s2{background:linear-gradient(180deg,#0ea76a,#0c4a2f)}
+.plot.s3{background:linear-gradient(180deg,#34d399,#0ea76a)}
+@media (max-width:1100px){.grid2{grid-template-columns:1fr}}
+
