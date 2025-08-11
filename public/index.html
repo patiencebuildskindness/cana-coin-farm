@@ -3,16 +3,15 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CANA Coin Farm (alpha)</title>
+  <title>CANA Coin Farm</title>
   <meta name="theme-color" content="#042315"/>
-  <link rel="icon" href="/logo.svg">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css"/>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
   <main class="wrap">
     <header class="header">
-      <img src="/logo.svg" alt="CANA Coin Farm" class="logo">
+      <img src="/logo.svg" class="logo" alt="CANA"/>
       <div class="titles">
         <h1>CANA Coin Farm</h1>
         <p class="subtitle">Earn-to-Learn • Grow medicinal plants • Respect traditions</p>
@@ -20,67 +19,67 @@
     </header>
 
     <section class="card">
-      <h2>Welcome Farmer!</h2>
-      <p>This is the CANA Coin Farm mini-app. Soon you'll plant, learn, and earn $CANA by growing virtual medicinal plants and unlocking real-world wisdom.</p>
       <div class="row">
-        <a class="btn" id="btn-learn">🌿 Preview Plant Card</a>
-        <a class="btn secondary" id="btn-close">Close</a>
+        <input id="q" class="input" placeholder="Search plants…"/>
+        <button class="btn" id="refresh">Refresh</button>
+        <button class="btn secondary" id="close">Close</button>
       </div>
     </section>
 
-    <section class="grid">
-      <div class="mini card">
-        <h3>Next Steps</h3>
-        <ol>
-          <li>Connect plant database</li>
-          <li>Add XP for learning</li>
-          <li>Unlock badges & cosmetic farm items</li>
-        </ol>
-      </div>
-      <div class="mini card">
-        <h3>Status</h3>
-        <div id="status">Checking…</div>
-      </div>
-    </section>
+    <section id="list" class="grid"></section>
 
     <footer class="footer">
-      <small>© CANA Coin Farm — alpha. Educational and respectful use of medicinal plants.</small>
+      <small>© CANA Coin Farm — alpha</small>
     </footer>
   </main>
 
-  <dialog id="plantModal">
-    <div class="modal-card">
-      <h3>Sample Plant Card</h3>
-      <p><b>Chamomile</b> (<i>Matricaria chamomilla</i>) — gentle nervine, digestive support.</p>
-      <ul>
-        <li><b>Preparation:</b> Hot infusion, 1–2 tsp/cup, 5–10 min</li>
-        <li><b>Safety:</b> Asteraceae allergy caution</li>
-        <li><b>Culture:</b> Widely used across Europe & W. Asia</li>
-      </ul>
-      <div class="row">
-        <button class="btn" id="btn-ok">I learned this (+1 XP soon)</button>
-        <button class="btn secondary" id="btn-close-modal">Close</button>
-      </div>
+  <template id="plant-card">
+    <div class="mini card">
+      <div class="name"></div>
+      <div class="latin"></div>
+      <button class="btn learn">I learned this (+1 XP soon)</button>
     </div>
-  </dialog>
+  </template>
 
   <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) tg.expand();
+    const tg = window.Telegram?.WebApp; if (tg) tg.expand();
+    const list = document.getElementById('list');
+    const cardTpl = document.getElementById('plant-card');
+    const refreshBtn = document.getElementById('refresh');
+    const closeBtn = document.getElementById('close');
+    const q = document.getElementById('q');
 
-    const status = document.getElementById('status');
-    fetch('/api/init').then(r => r.json()).then(d => {
-      status.textContent = d.ok ? 'Mini-app is live.' : 'Init failed.';
-    }).catch(() => status.textContent = 'Offline');
+    let plants = [], visible = [];
 
-    const modal = document.getElementById('plantModal');
-    document.getElementById('btn-learn').onclick = () => modal.showModal();
-    document.getElementById('btn-close').onclick = () => tg && tg.close();
-    document.getElementById('btn-ok').onclick = () => {
-      alert('XP system coming next. For now this is just a preview.');
-      modal.close();
-    };
-    document.getElementById('btn-close-modal').onclick = () => modal.close();
+    async function loadPlants(){
+      const r = await fetch('/api/plants');
+      const d = await r.json();
+      plants = (d && d.ok) ? d.plants : [];
+      filter();
+    }
+
+    function filter(){
+      const term = q.value.trim().toLowerCase();
+      visible = plants.filter(p => !term || (p.common_name||'').toLowerCase().includes(term) || (p.scientific_name||'').toLowerCase().includes(term));
+      render();
+    }
+
+    function render(){
+      list.innerHTML = '';
+      visible.slice(0, 100).forEach(p => {
+        const node = cardTpl.content.cloneNode(true);
+        node.querySelector('.name').textContent = p.common_name || 'Unknown common name';
+        node.querySelector('.latin').textContent = p.scientific_name || '';
+        node.querySelector('.learn').onclick = () => alert('XP +1 coming soon (earn-to-learn)');
+        list.appendChild(node);
+      });
+    }
+
+    refreshBtn.onclick = loadPlants;
+    closeBtn.onclick = () => tg && tg.close();
+    q.oninput = filter;
+
+    loadPlants();
   </script>
 </body>
 </html>
