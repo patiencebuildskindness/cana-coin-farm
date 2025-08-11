@@ -14,53 +14,77 @@
       <img src="/logo.svg" class="logo" alt="CANA"/>
       <div class="titles">
         <h1>CANA Coin Farm</h1>
-        <p class="subtitle">Earn-to-Learn • Grow medicinal plants • Respect traditions</p>
+        <p class="subtitle">Earn-to-Learn • Plant • Water • Harvest</p>
       </div>
     </header>
 
     <section class="card">
       <div class="row">
-        <input id="q" class="input" placeholder="Search plants…"/>
+        <input id="q" class="input" placeholder="Search seeds…"/>
         <button class="btn" id="refresh">Refresh</button>
         <button class="btn secondary" id="close">Close</button>
       </div>
     </section>
 
-    <!-- XP card -->
+    <!-- XP -->
     <section class="card" id="xpCard" style="display:none">
       <b>XP:</b> <span id="xpVal">0</span>
       <span id="badgeWrap" style="margin-left:8px;"></span>
     </section>
 
-    <section id="list" class="grid"></section>
+    <section class="grid2">
+      <!-- Seeds panel -->
+      <div class="panel card" style="min-width:260px">
+        <h3>Seeds</h3>
+        <div id="seeds" class="seeds"></div>
+      </div>
+
+      <!-- Farm grid -->
+      <div class="panel card" style="flex:1">
+        <h3>Farm</h3>
+        <div id="farm" class="farm"></div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="btnWater">Water</button>
+          <button class="btn" id="btnHarvest">Harvest</button>
+          <span id="selection" class="muted"></span>
+        </div>
+      </div>
+    </section>
 
     <footer class="footer">
       <small>© CANA Coin Farm — alpha</small>
     </footer>
   </main>
 
-  <template id="plant-card">
-    <div class="mini card">
-      <div class="name"></div>
-      <div class="latin"></div>
-      <button class="btn learn">I learned this (+1 XP)</button>
-    </div>
-  </template>
-
   <script>
     const tg = window.Telegram?.WebApp; if (tg) tg.expand();
     const initData = tg?.initData || '';
 
-    const list = document.getElementById('list');
-    const cardTpl = document.getElementById('plant-card');
+    const q = document.getElementById('q');
+    const farmEl = document.getElementById('farm');
+    const seedsEl = document.getElementById('seeds');
     const refreshBtn = document.getElementById('refresh');
     const closeBtn = document.getElementById('close');
-    const q = document.getElementById('q');
     const xpCard = document.getElementById('xpCard');
     const xpVal = document.getElementById('xpVal');
     const badgeWrap = document.getElementById('badgeWrap');
+    const btnWater = document.getElementById('btnWater');
+    const btnHarvest = document.getElementById('btnHarvest');
+    const selection = document.getElementById('selection');
 
-    let plants = [], visible = [];
+    let plants = [];      // catalog (from /api/plants)
+    let farm = null;      // { grid, plots[], seeds{} }
+    let selectedSeed = null; // plant_id
+    let selectedPlot = null; // index
+
+    async function api(path, payload) {
+      const r = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-TG-Init-Data': initData },
+        body: JSON.stringify({ ...(payload||{}), initData })
+      });
+      return r.json();
+    }
 
     async function getXP(){
       const r = await fetch('/api/xp/get', {
@@ -70,70 +94,133 @@
       });
       return r.json();
     }
-    async function incXP(){
-      const r = await fetch('/api/xp/inc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-TG-Init-Data': initData },
-        body: JSON.stringify({ initData })
-      });
-      return r.json();
+
+    function plantIdOf(p) { return (p.scientific_name || p.common_name || '').trim(); }
+    function nameOfId(id) {
+      const p = plants.find(x => plantIdOf(x) === id);
+      return p ? (p.common_name || p.scientific_name) : id;
     }
 
-    async function loadXP() {
-      const s = await getXP();
-      if (s.ok) {
-        xpCard.style.display = 'block';
-        xpVal.textContent = s.xp;
-        badgeWrap.textContent = (s.badges || []).join(' • ');
+    async function loadCatalog(){
+      const r = await fetch('/api/plants');
+      const d = await r.json();
+      plants = d.ok ? d.plants : [];
+    }
+
+    async function loadFarm(){
+      const d = await api('/api/farm/get');
+      if (d.ok) {
+        farm = d;
+        renderSeeds();
+        renderFarm();
+        if (typeof d.xp !== 'undefined') {
+          xpCard.style.display = 'block';
+          xpVal.textContent = d.xp;
+          badgeWrap.textContent = (d.badges || []).join(' • ');
+        } else {
+          const s = await getXP();
+          if (s.ok) {
+            xpCard.style.display = 'block';
+            xpVal.textContent = s.xp;
+            badgeWrap.textContent = (s.badges || []).join(' • ');
+          }
+        }
       }
     }
 
-    async function loadPlants(){
-      const r = await fetch('/api/plants');
-      const d = await r.json();
-      plants = (d && d.ok) ? d.plants : [];
-      filter();
-    }
-
-    function filter(){
+    function renderSeeds(){
       const term = q.value.trim().toLowerCase();
-      visible = plants.filter(p => !term || (p.common_name||'').toLowerCase().includes(term) || (p.scientific_name||'').toLowerCase().includes(term));
-      render();
+      const entries = Object.entries(farm.seeds).filter(([,qty]) => qty > 0);
+      const filtered = entries.filter(([id]) => {
+        const nm = nameOfId(id).toLowerCase();
+        return !term || nm.includes(term);
+      });
+      seedsEl.innerHTML = '';
+      filtered.forEach(([id, qty]) => {
+        const div = document.createElement('div');
+        div.className = 'seed';
+        div.textContent = `${nameOfId(id)} — ${qty} seeds`;
+        div.onclick = () => {
+          selectedSeed = id;
+          selection.textContent = `Selected seed: ${nameOfId(id)}`;
+        };
+        seedsEl.appendChild(div);
+      });
+      if (filtered.length === 0) seedsEl.innerHTML = '<div class="muted">No seeds available</div>';
     }
 
-    function render(){
-      list.innerHTML = '';
-      visible.slice(0, 120).forEach(p => {
-        const node = cardTpl.content.cloneNode(true);
-        node.querySelector('.name').textContent = p.common_name || 'Unknown common name';
-        node.querySelector('.latin').textContent = p.scientific_name || '';
-        node.querySelector('.learn').onclick = async () => {
-          const data = await incXP();
-          if (data.ok) {
-            xpCard.style.display = 'block';
-            xpVal.textContent = data.xp;
-            badgeWrap.textContent = (data.badges || []).join(' • ');
-            const justUnlocked = (data.badges || []).slice(-1)[0];
-            if (justUnlocked && data.xp === 5) {
-              alert('+1 XP!\nBadge unlocked: Mint Keeper 🌿');
+    function renderFarm(){
+      const n = farm.grid;
+      farmEl.style.setProperty('--n', n);
+      farmEl.innerHTML = '';
+      farm.plots.forEach((p, i) => {
+        const cell = document.createElement('div');
+        cell.className = 'plot';
+        const stage = p.stage || 0; // 0 empty, 1-3 growth
+        if (p.plant_id) {
+          cell.classList.add(`s${stage}`);
+          cell.title = `${nameOfId(p.plant_id)} — stage ${stage}/3`;
+          cell.innerHTML = `<div class="plant">${nameOfId(p.plant_id)}</div><div class="st">S${stage}</div>`;
+        } else {
+          cell.innerHTML = `<div class="empty">Empty</div>`;
+        }
+        if (selectedPlot === i) cell.classList.add('selected');
+        cell.onclick = async () => {
+          selectedPlot = i;
+          // if a seed selected, try to plant
+          if (selectedSeed && !p.plant_id) {
+            const d = await api('/api/farm/plant', { index: i, plant_id: selectedSeed });
+            if (d.ok) {
+              farm.plots = d.plots;
+              farm.seeds = d.seeds;
+              xpCard.style.display = 'block';
+              if (typeof d.xp === 'number') xpVal.textContent = d.xp;
+              if (d.badges) badgeWrap.textContent = d.badges.join(' • ');
+              selectedSeed = null;
+              selection.textContent = '';
+              renderSeeds(); renderFarm();
+              return;
             } else {
-              alert(`+1 XP! Total: ${data.xp}`);
+              alert(d.error || 'Could not plant');
             }
-          } else {
-            alert('Could not save XP (alpha).');
           }
+          renderFarm();
         };
-        list.appendChild(node);
+        farmEl.appendChild(cell);
       });
     }
 
-    refreshBtn.onclick = loadPlants;
+    btnWater.onclick = async () => {
+      if (selectedPlot == null) return alert('Select a plot first');
+      const d = await api('/api/farm/water', { index: selectedPlot });
+      if (d.ok) { farm.plots = d.plots; renderFarm(); }
+      else alert(d.error || 'Could not water');
+    };
+
+    btnHarvest.onclick = async () => {
+      if (selectedPlot == null) return alert('Select a plot first');
+      const d = await api('/api/farm/harvest', { index: selectedPlot });
+      if (d.ok) {
+        farm.plots = d.plots;
+        xpCard.style.display = 'block';
+        if (typeof d.xp === 'number') xpVal.textContent = d.xp;
+        if (d.badges) badgeWrap.textContent = d.badges.join(' • ');
+        renderFarm();
+      } else {
+        alert(d.error || 'Not ready');
+      }
+    };
+
+    q.oninput = renderSeeds;
+    refreshBtn.onclick = async () => { await loadCatalog(); await loadFarm(); };
     closeBtn.onclick = () => tg && tg.close();
-    q.oninput = filter;
 
     // Init
-    loadXP();
-    loadPlants();
+    (async () => {
+      await loadCatalog();
+      await loadFarm();
+      setInterval(loadFarm, 5000); // refresh growth stages
+    })();
   </script>
 </body>
 </html>
