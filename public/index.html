@@ -14,12 +14,20 @@
       <img src="/logo.svg" class="logo" alt="CANA"/>
       <div class="titles">
         <h1>CANA Coin Farm</h1>
-        <p class="subtitle">Earn-to-Learn • Plant • Water • Harvest</p>
+        <p class="subtitle">Earn-to-Learn • Biomes • Inventory Growth</p>
       </div>
     </header>
 
     <section class="card">
       <div class="row">
+        <label>Biome:
+          <select id="biome">
+            <option value="temperate">Temperate</option>
+            <option value="tropical">Tropical (faster, +yield)</option>
+            <option value="arid">Arid (slower)</option>
+            <option value="wetland">Wetland (faster, +yield)</option>
+          </select>
+        </label>
         <input id="q" class="input" placeholder="Search seeds…"/>
         <button class="btn" id="refresh">Refresh</button>
         <button class="btn secondary" id="close">Close</button>
@@ -33,13 +41,13 @@
     </section>
 
     <section class="grid2">
-      <!-- Seeds panel -->
+      <!-- Seeds -->
       <div class="panel card" style="min-width:260px">
         <h3>Seeds</h3>
         <div id="seeds" class="seeds"></div>
       </div>
 
-      <!-- Farm grid -->
+      <!-- Farm -->
       <div class="panel card" style="flex:1">
         <h3>Farm</h3>
         <div id="farm" class="farm"></div>
@@ -48,6 +56,13 @@
           <button class="btn" id="btnHarvest">Harvest</button>
           <span id="selection" class="muted"></span>
         </div>
+      </div>
+
+      <!-- Inventory -->
+      <div class="panel card" style="min-width:260px">
+        <h3>Inventory</h3>
+        <div class="muted">Produce (from harvest)</div>
+        <div id="produce" class="seeds"></div>
       </div>
     </section>
 
@@ -60,9 +75,11 @@
     const tg = window.Telegram?.WebApp; if (tg) tg.expand();
     const initData = tg?.initData || '';
 
+    const biomeSel = document.getElementById('biome');
     const q = document.getElementById('q');
     const farmEl = document.getElementById('farm');
     const seedsEl = document.getElementById('seeds');
+    const produceEl = document.getElementById('produce');
     const refreshBtn = document.getElementById('refresh');
     const closeBtn = document.getElementById('close');
     const xpCard = document.getElementById('xpCard');
@@ -72,10 +89,10 @@
     const btnHarvest = document.getElementById('btnHarvest');
     const selection = document.getElementById('selection');
 
-    let plants = [];      // catalog (from /api/plants)
-    let farm = null;      // { grid, plots[], seeds{} }
-    let selectedSeed = null; // plant_id
-    let selectedPlot = null; // index
+    let plants = [];
+    let farm = null;
+    let selectedSeed = null;
+    let selectedPlot = null;
 
     async function api(path, payload) {
       const r = await fetch(path, {
@@ -85,7 +102,6 @@
       });
       return r.json();
     }
-
     async function getXP(){
       const r = await fetch('/api/xp/get', {
         method: 'POST',
@@ -111,19 +127,15 @@
       const d = await api('/api/farm/get');
       if (d.ok) {
         farm = d;
+        biomeSel.value = d.biome || 'temperate';
         renderSeeds();
         renderFarm();
-        if (typeof d.xp !== 'undefined') {
+        renderProduce();
+        const s = await getXP();
+        if (s.ok) {
           xpCard.style.display = 'block';
-          xpVal.textContent = d.xp;
-          badgeWrap.textContent = (d.badges || []).join(' • ');
-        } else {
-          const s = await getXP();
-          if (s.ok) {
-            xpCard.style.display = 'block';
-            xpVal.textContent = s.xp;
-            badgeWrap.textContent = (s.badges || []).join(' • ');
-          }
+          xpVal.textContent = s.xp;
+          badgeWrap.textContent = (s.badges || []).join(' • ');
         }
       }
     }
@@ -131,10 +143,7 @@
     function renderSeeds(){
       const term = q.value.trim().toLowerCase();
       const entries = Object.entries(farm.seeds).filter(([,qty]) => qty > 0);
-      const filtered = entries.filter(([id]) => {
-        const nm = nameOfId(id).toLowerCase();
-        return !term || nm.includes(term);
-      });
+      const filtered = entries.filter(([id]) => (nameOfId(id) || '').toLowerCase().includes(term));
       seedsEl.innerHTML = '';
       filtered.forEach(([id, qty]) => {
         const div = document.createElement('div');
@@ -156,7 +165,7 @@
       farm.plots.forEach((p, i) => {
         const cell = document.createElement('div');
         cell.className = 'plot';
-        const stage = p.stage || 0; // 0 empty, 1-3 growth
+        const stage = p.stage || 0;
         if (p.plant_id) {
           cell.classList.add(`s${stage}`);
           cell.title = `${nameOfId(p.plant_id)} — stage ${stage}/3`;
@@ -167,22 +176,16 @@
         if (selectedPlot === i) cell.classList.add('selected');
         cell.onclick = async () => {
           selectedPlot = i;
-          // if a seed selected, try to plant
           if (selectedSeed && !p.plant_id) {
             const d = await api('/api/farm/plant', { index: i, plant_id: selectedSeed });
             if (d.ok) {
-              farm.plots = d.plots;
-              farm.seeds = d.seeds;
+              farm.plots = d.plots; farm.seeds = d.seeds;
               xpCard.style.display = 'block';
               if (typeof d.xp === 'number') xpVal.textContent = d.xp;
               if (d.badges) badgeWrap.textContent = d.badges.join(' • ');
-              selectedSeed = null;
-              selection.textContent = '';
-              renderSeeds(); renderFarm();
-              return;
-            } else {
-              alert(d.error || 'Could not plant');
-            }
+              selectedSeed = null; selection.textContent = '';
+              renderSeeds(); renderFarm(); return;
+            } else { alert(d.error || 'Could not plant'); }
           }
           renderFarm();
         };
@@ -190,36 +193,58 @@
       });
     }
 
-    btnWater.onclick = async () => {
-      if (selectedPlot == null) return alert('Select a plot first');
-      const d = await api('/api/farm/water', { index: selectedPlot });
-      if (d.ok) { farm.plots = d.plots; renderFarm(); }
-      else alert(d.error || 'Could not water');
-    };
+    function renderProduce(){
+      const entries = Object.entries(farm.produce || {}).filter(([,qty]) => qty > 0);
+      produceEl.innerHTML = '';
+      if (entries.length === 0) {
+        produceEl.innerHTML = '<div class="muted">No produce yet — harvest to collect.</div>';
+        return;
+      }
+      entries.forEach(([id, qty]) => {
+        const div = document.createElement('div');
+        div.className = 'seed';
+        div.textContent = `${nameOfId(id)} — ${qty} produce`;
+        produceEl.appendChild(div);
+      });
+    }
 
-    btnHarvest.onclick = async () => {
-      if (selectedPlot == null) return alert('Select a plot first');
-      const d = await api('/api/farm/harvest', { index: selectedPlot });
+    biomeSel.onchange = async () => {
+      const b = biomeSel.value;
+      const d = await api('/api/farm/setBiome', { biome: b });
       if (d.ok) {
-        farm.plots = d.plots;
-        xpCard.style.display = 'block';
-        if (typeof d.xp === 'number') xpVal.textContent = d.xp;
-        if (d.badges) badgeWrap.textContent = d.badges.join(' • ');
-        renderFarm();
+        await loadFarm();
+        alert(`Biome set to ${b}. Growth speed adjusted.`);
       } else {
-        alert(d.error || 'Not ready');
+        alert(d.error || 'Failed to set biome');
       }
     };
 
-    q.oninput = renderSeeds;
-    refreshBtn.onclick = async () => { await loadCatalog(); await loadFarm(); };
-    closeBtn.onclick = () => tg && tg.close();
+    document.getElementById('btnWater').onclick = async () => {
+      if (selectedPlot == null) return alert('Select a plot first');
+      const d = await api('/api/farm/water', { index: selectedPlot });
+      if (d.ok) { farm.plots = d.plots; renderFarm(); } else alert(d.error || 'Could not water');
+    };
 
-    // Init
+    document.getElementById('btnHarvest').onclick = async () => {
+      if (selectedPlot == null) return alert('Select a plot first');
+      const d = await api('/api/farm/harvest', { index: selectedPlot });
+      if (d.ok) {
+        farm.plots = d.plots; farm.produce = d.produce; farm.seeds = d.seeds;
+        xpCard.style.display = 'block';
+        if (typeof d.xp === 'number') xpVal.textContent = d.xp;
+        if (d.badges) badgeWrap.textContent = d.badges.join(' • ');
+        renderFarm(); renderProduce();
+      } else alert(d.error || 'Not ready');
+    };
+
+    q.oninput = renderSeeds;
+    document.getElementById('refresh').onclick = async () => { await loadCatalog(); await loadFarm(); };
+    document.getElementById('close').onclick = () => tg && tg.close();
+
     (async () => {
       await loadCatalog();
       await loadFarm();
-      setInterval(loadFarm, 5000); // refresh growth stages
+      setInterval(loadFarm, 5000);
     })();
   </script>
 </body>
