@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CANA - Proof of Growth</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a3d34, #0a1f1b);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #4ade80;
+            font-size: 32px;
+            margin: 10px 0;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .stat {
+            background: rgba(74, 222, 128, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid #4ade80;
+        }
+        .garden {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 10px;
+            margin: 30px auto;
+        }
+        .plot {
+            width: 100px;
+            height: 100px;
+            background: #2d5a47;
+            border: 2px solid #4ade80;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .plot:hover {
+            transform: scale(1.05);
+            background: #3a6b55;
+        }
+        .plant-emoji {
+            font-size: 30px;
+            margin-bottom: 5px;
+        }
+        button {
+            background: #4ade80;
+            color: #0a1f1b;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #22c55e;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌿 CANA: Proof of Growth 🌿</h1>
+        <p>Learn Indigenous Plant Wisdom</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div>💰 Coins</div>
+            <div id="coins">1000</div>
+        </div>
+        <div class="stat">
+            <div>⭐ Level</div>
+            <div id="level">1</div>
+        </div>
+        <div class="stat">
+            <div>🌱 Plants</div>
+            <div id="plants">0</div>
+        </div>
+    </div>
+
+    <div class="garden" id="garden"></div>
+
+    <div style="text-align: center;">
+        <button onclick="plantSeed()">🌱 Plant Seed (10 coins)</button>
+        <button onclick="harvestAll()">🌾 Harvest All</button>
+        <button onclick="dailyReward()">🎁 Daily Reward</button>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        // Game State
+        let gameState = {
+            coins: 1000,
+            level: 1,
+            plants: 0,
+            plots: Array(9).fill(null)
+        };
+
+        // Initialize Garden
+        function initGarden() {
+            const garden = document.getElementById('garden');
+            garden.innerHTML = '';
+            
+            for (let i = 0; i < 9; i++) {
+                const plot = document.createElement('div');
+                plot.className = 'plot';
+                plot.onclick = () => harvestPlot(i);
+                
+                if (gameState.plots[i]) {
+                    plot.innerHTML = '<div class="plant-emoji">🌿</div><div>Growing...</div>';
+                } else {
+                    plot.innerHTML = '<div class="plant-emoji">🌱</div><div>Empty</div>';
+                }
+                
+                garden.appendChild(plot);
+            }
+        }
+
+        // Plant Seed
+        function plantSeed() {
+            const emptyPlot = gameState.plots.findIndex(p => p === null);
+            
+            if (emptyPlot === -1) {
+                tg.showAlert('All plots are full! Harvest first.');
+                return;
+            }
+            
+            if (gameState.coins < 10) {
+                tg.showAlert('Not enough coins!');
+                return;
+            }
+            
+            gameState.coins -= 10;
+            gameState.plots[emptyPlot] = { 
+                planted: Date.now(), 
+                ready: Date.now() + 30000 // 30 seconds for testing
+            };
+            gameState.plants++;
+            
+            updateUI();
+            initGarden();
+            
+            // Auto-ready notification
+            setTimeout(() => {
+                tg.showAlert('🌟 Plant is ready to harvest!');
+                initGarden();
+            }, 30000);
+        }
+
+        // Harvest Plot
+        function harvestPlot(index) {
+            const plot = gameState.plots[index];
+            
+            if (!plot) {
+                tg.showAlert('Nothing to harvest here!');
+                return;
+            }
+            
+            if (Date.now() < plot.ready) {
+                const timeLeft = Math.ceil((plot.ready - Date.now()) / 1000);
+                tg.showAlert(`Not ready! ${timeLeft} seconds remaining.`);
+                return;
+            }
+            
+            // Harvest rewards
+            const reward = Math.floor(Math.random() * 20) + 30;
+            gameState.coins += reward;
+            gameState.plots[index] = null;
+            
+            // Check level up
+            const xp = 10;
+            const newLevel = Math.floor(gameState.plants / 10) + 1;
+            if (newLevel > gameState.level) {
+                gameState.level = newLevel;
+                tg.showAlert(`🎉 LEVEL UP! You are now level ${newLevel}!`);
+            }
+            
+            updateUI();
+            initGarden();
+            tg.showAlert(`🌾 Harvested! +${reward} coins!`);
+        }
+
+        // Harvest All
+        function harvestAll() {
+            let totalReward = 0;
+            let harvested = 0;
+            
+            gameState.plots.forEach((plot, index) => {
+                if (plot && Date.now() >= plot.ready) {
+                    const reward = Math.floor(Math.random() * 20) + 30;
+                    totalReward += reward;
+                    gameState.coins += reward;
+                    gameState.plots[index] = null;
+                    harvested++;
+                }
+            });
+            
+            if (harvested > 0) {
+                updateUI();
+                initGarden();
+                tg.showAlert(`🌾 Harvested ${harvested} plants! +${totalReward} coins!`);
+            } else {
+                tg.showAlert('No plants ready to harvest!');
+            }
+        }
+
+        // Daily Reward
+        function dailyReward() {
+            const lastClaim = localStorage.getItem('lastDailyReward');
+            const now = Date.now();
+            
+            if (lastClaim && now - parseInt(lastClaim) < 86400000) {
+                const hoursLeft = Math.ceil((86400000 - (now - parseInt(lastClaim))) / 3600000);
+                tg.showAlert(`Come back in ${hoursLeft} hours!`);
+                return;
+            }
+            
+            const reward = 100;
+            gameState.coins += reward;
+            localStorage.setItem('lastDailyReward', now.toString());
+            
+            updateUI();
+            tg.showAlert(`🎁 Daily reward claimed! +${reward} coins!`);
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('coins').textContent = gameState.coins;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('plants').textContent = gameState.plants;
+            
+            // Save to localStorage
+            localStorage.setItem('gameState', JSON.stringify(gameState));
+        }
+
+        // Load saved game
+        function loadGame() {
+            const saved = localStorage.getItem('gameState');
+            if (saved) {
+                gameState = JSON.parse(saved);
+            }
+            updateUI();
+            initGarden();
+        }
+
+        // Initialize
+        loadGame();
+        
+        // Auto-save every 10 seconds
+        setInterval(() => {
+            localStorage.setItem('gameState', JSON.stringify(gameState));
+        }, 10000);
+    </script>
+</body>
+</html>
