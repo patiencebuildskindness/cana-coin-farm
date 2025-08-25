@@ -527,7 +527,7 @@ app.get('/api/leaderboard', async (req, res) => {
 // TELEGRAM BOT COMMANDS (Simple)
 // ============================================
 bot.command('start', async (ctx) => {
-  const webAppUrl = `https://${process.env.RENDER_EXTERNAL_HOSTNAME || 'localhost:3000'}`;
+  const webAppUrl = 'https://cana-coin-farm.onrender.com'; 
   
   await ctx.reply(
     '🌿 Welcome to CANA Coin Farm! 🌿\n\n' +
