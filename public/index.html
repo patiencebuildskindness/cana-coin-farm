@@ -6,118 +6,363 @@
     <title>CANA - Proof of Growth</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1a3d34, #0a1f1b);
-            color: white;
+            font-family: -apple-system, Arial, sans-serif;
+            background: #0a1f1b;
+            color: #e0f2e9;
             min-height: 100vh;
-            padding: 20px;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        h1 {
-            color: #4ade80;
-        }
-        .game-area {
+        
+        .container {
             max-width: 500px;
             margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .stat-box {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            padding: 10px;
+            border-radius: 10px;
             text-align: center;
         }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4ade80;
+        }
+        
+        .garden {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .plot {
+            aspect-ratio: 1;
+            background: #1a3d34;
+            border: 2px solid #22c55e;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .plot:hover { transform: scale(1.05); }
+        .plot-ready { background: #ffc107; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        
+        .plant-icon { font-size: 30px; }
+        .plant-status { font-size: 12px; margin-top: 5px; }
+        
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
         button {
-            background: #4ade80;
-            color: black;
+            background: #22c55e;
+            color: white;
             border: none;
-            padding: 15px 30px;
-            margin: 10px;
+            padding: 15powerful;
             border-radius: 10px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
         }
-        .stats {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 10px;
+        
+        button:active { transform: scale(0.95); }
+        
+        .info-section {
+            background: rgba(34, 197, 94, 0.05);
+            border-left: 3px solid #22c55e;
+            padding: 15px;
             margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .plant-fact {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid #fbbf24;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🌿 CANA: Proof of Growth 🌿</h1>
-        <p>Learn Indigenous Plant Wisdom</p>
-    </div>
-    
-    <div class="game-area">
-        <div class="stats">
-            <h2>Your Garden</h2>
-            <p>Coins: <span id="coins">1000</span></p>
-            <p>Plants: <span id="plants">0</span></p>
-            <p>Level: <span id="level">1</span></p>
+    <div class="container">
+        <div class="header">
+            <h1>🌿 CANA: Proof of Growth</h1>
+            <p>Learn Traditional Plant Medicine</p>
         </div>
         
-        <button onclick="plantSeed()">🌱 Plant Seed (-10 coins)</button>
-        <button onclick="harvest()">🌾 Harvest (+30 coins)</button>
-        <button onclick="learn()">📚 Learn About Plants</button>
+        <div class="stats">
+            <div class="stat-box">
+                <div>Coins</div>
+                <div class="stat-value" id="coins">1000</div>
+            </div>
+            <div class="stat-box">
+                <div>Level</div>
+                <div class="stat-value" id="level">1</div>
+            </div>
+            <div class="stat-box">
+                <div>Energy</div>
+                <div class="stat-value" id="energy">100</div>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <strong>Your Garden (Tap plots to interact)</strong>
+        </div>
+        
+        <div class="garden" id="garden"></div>
+        
+        <div class="actions">
+            <button onclick="plantRandom()">🌱 Plant Random (10 coins)</button>
+            <button onclick="harvestAll()">🌾 Harvest All Ready</button>
+            <button onclick="waterAll()">💧 Water All (5 energy)</button>
+            <button onclick="showPlantWisdom()">📚 Plant Wisdom</button>
+        </div>
+        
+        <div id="plantFact" class="plant-fact" style="display: none;"></div>
     </div>
     
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-        
-        let coins = 1000;
-        let plants = 0;
-        let level = 1;
-        
-        function updateDisplay() {
-            document.getElementById('coins').textContent = coins;
-            document.getElementById('plants').textContent = plants;
-            document.getElementById('level').textContent = level;
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
         }
         
-        function plantSeed() {
-            if (coins >= 10) {
-                coins -= 10;
-                plants++;
-                updateDisplay();
-                tg.showPopup({
-                    title: 'Planted!',
-                    message: '🌱 Your seed is growing!',
-                    buttons: [{type: 'ok'}]
-                });
-            } else {
-                tg.showAlert('Not enough coins!');
+        // Game State
+        let state = {
+            coins: 1000,
+            level: 1,
+            energy: 100,
+            plots: Array(9).fill(null),
+            plants: [
+                {name: 'Aloe Vera', icon: '🌵', time: 10, value: 30, fact: 'Used for 6000+ years. Contains 75 active compounds for skin healing.'},
+                {name: 'Mint', icon: '🌿', time: 15, value: 40, fact: 'Aids digestion. Ancient Greeks rubbed it on arms for strength.'},
+                {name: 'Lavender', icon: '💜', time: 20, value: 50, fact: 'Reduces anxiety. Romans used it in baths for purification.'},
+                {name: 'Ginger', icon: '🫚', time: 25, value: 60, fact: 'Fights nausea. Used in Chinese medicine for 2500+ years.'},
+                {name: 'Turmeric', icon: '🟡', time: 30, value: 70, fact: 'Anti-inflammatory. Sacred in Hindu ceremonies for centuries.'}
+            ]
+        };
+        
+        // Load saved state
+        const saved = localStorage.getItem('canaState');
+        if (saved) {
+            state = {...state, ...JSON.parse(saved)};
+        }
+        
+        function save() {
+            localStorage.setItem('canaState', JSON.stringify(state));
+        }
+        
+        function updateUI() {
+            document.getElementById('coins').textContent = state.coins;
+            document.getElementById('level').textContent = state.level;
+            document.getElementById('energy').textContent = state.energy;
+            save();
+        }
+        
+        function initGarden() {
+            const garden = document.getElementById('garden');
+            garden.innerHTML = '';
+            
+            for (let i = 0; i < 9; i++) {
+                const plot = document.createElement('div');
+                plot.className = 'plot';
+                
+                if (state.plots[i]) {
+                    const plant = state.plots[i];
+                    const now = Date.now();
+                    const ready = now >= plant.readyTime;
+                    
+                    if (ready) {
+                        plot.className = 'plot plot-ready';
+                    }
+                    
+                    plot.innerHTML = `
+                        <div class="plant-icon">${plant.icon}</div>
+                        <div class="plant-status">${ready ? 'Ready!' : `${Math.ceil((plant.readyTime - now) / 1000)}s`}</div>
+                    `;
+                    
+                    plot.onclick = () => ready ? harvest(i) : water(i);
+                } else {
+                    plot.innerHTML = `
+                        <div class="plant-icon">🌱</div>
+                        <div class="plant-status">Empty</div>
+                    `;
+                    plot.onclick = () => plant(i);
+                }
+                
+                garden.appendChild(plot);
             }
         }
         
-        function harvest() {
-            if (plants > 0) {
-                coins += 30 * plants;
-                level = Math.floor(plants / 5) + 1;
-                updateDisplay();
-                tg.showPopup({
-                    title: 'Harvested!',
-                    message: `🌾 You earned ${30 * plants} coins!`,
-                    buttons: [{type: 'ok'}]
-                });
-            } else {
-                tg.showAlert('No plants to harvest! Plant some seeds first.');
+        function plant(plotId) {
+            if (state.coins < 10) {
+                alert('Need 10 coins to plant!');
+                return;
             }
+            
+            const plant = state.plants[Math.floor(Math.random() * state.plants.length)];
+            state.plots[plotId] = {
+                ...plant,
+                readyTime: Date.now() + (plant.time * 1000)
+            };
+            
+            state.coins -= 10;
+            updateUI();
+            initGarden();
+            
+            if (tg) tg.HapticFeedback.impactOccurred('light');
         }
         
-        function learn() {
-            tg.showPopup({
-                title: '🌿 Medicinal Plants',
-                message: 'Aloe Vera: Used for 6000+ years for skin healing. Contains 75+ active compounds!',
-                buttons: [{type: 'ok'}]
+        function plantRandom() {
+            const empty = state.plots.findIndex(p => !p);
+            if (empty === -1) {
+                alert('No empty plots!');
+                return;
+            }
+            plant(empty);
+        }
+        
+        function harvest(plotId) {
+            const plant = state.plots[plotId];
+            if (!plant) return;
+            
+            state.coins += plant.value;
+            state.plots[plotId] = null;
+            
+            // Level up every 50 coins earned
+            state.level = Math.floor(state.coins / 500) + 1;
+            
+            // Show plant wisdom
+            document.getElementById('plantFact').innerHTML = `
+                <strong>🌟 ${plant.name} Harvested!</strong><br>
+                ${plant.fact}
+            `;
+            document.getElementById('plantFact').style.display = 'block';
+            
+            updateUI();
+            initGarden();
+            
+            if (tg) tg.HapticFeedback.notificationOccurred('success');
+        }
+        
+        function harvestAll() {
+            let harvested = 0;
+            const now = Date.now();
+            
+            state.plots.forEach((plant, i) => {
+                if (plant && now >= plant.readyTime) {
+                    state.coins += plant.value;
+                    state.plots[i] = null;
+                    harvested++;
+                }
             });
+            
+            if (harvested > 0) {
+                state.level = Math.floor(state.coins / 500) + 1;
+                alert(`Harvested ${harvested} plants!`);
+                updateUI();
+                initGarden();
+            } else {
+                alert('No plants ready!');
+            }
         }
         
-        updateDisplay();
+        function water(plotId) {
+            const plant = state.plots[plotId];
+            if (plant && state.energy >= 5) {
+                plant.readyTime -= 5000; // Speed up by 5 seconds
+                state.energy -= 5;
+                updateUI();
+                initGarden();
+                alert('Watered! Plant grows faster.');
+            }
+        }
+        
+        function waterAll() {
+            if (state.energy < 5) {
+                alert('Need 5 energy!');
+                return;
+            }
+            
+            let watered = 0;
+            state.plots.forEach(plant => {
+                if (plant) {
+                    plant.readyTime -= 3000;
+                    watered++;
+                }
+            });
+            
+            if (watered > 0) {
+                state.energy -= 5;
+                updateUI();
+                initGarden();
+                alert(`Watered ${watered} plants!`);
+            }
+        }
+        
+        function showPlantWisdom() {
+            const facts = [
+                "🌿 Chamomile: Used by ancient Egyptians to treat fever and honor the sun god Ra.",
+                "🌺 Echinacea: Native Americans used it for 400+ years before antibiotics existed.",
+                "🌾 Willow Bark: Source of aspirin, used for pain relief since 400 BC.",
+                "🍄 Reishi: Called 'mushroom of immortality' in ancient China.",
+                "🌸 Calendula: Medieval Europeans called it 'Mary's Gold' for healing wounds."
+            ];
+            
+            const fact = facts[Math.floor(Math.random() * facts.length)];
+            document.getElementById('plantFact').innerHTML = fact;
+            document.getElementById('plantFact').style.display = 'block';
+        }
+        
+        // Energy regeneration
+        setInterval(() => {
+            if (state.energy < 100) {
+                state.energy++;
+                updateUI();
+            }
+        }, 5000); // +1 energy every 5 seconds
+        
+        // Auto-refresh garden
+        setInterval(initGarden, 1000);
+        
+        // Initialize
+        updateUI();
+        initGarden();
+        showPlantWisdom();
     </script>
 </body>
 </html>
