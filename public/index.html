@@ -1991,6 +1991,56 @@ function buyPlant(plantId) {
 
         // Auto-save every 30 seconds
         setInterval(saveGame, 30000);
+        // Add these missing functions:
+
+// Buy plant from market
+function buyPlant(plantId) {
+    const plant = gameState.plants.find(p => p.id === plantId);
+    if (!plant) return;
+    
+    if (gameState.coins < plant.value) {
+        showFloatingText('Not enough coins!', event.clientX, event.clientY, '#ef4444');
+        return;
+    }
+    
+    // Find empty plot
+    const emptyPlot = gameState.plots.findIndex(p => p === null);
+    if (emptyPlot === -1) {
+        showFloatingText('No empty plots!', event.clientX, event.clientY, '#ef4444');
+        return;
+    }
+    
+    // Plant it
+    gameState.coins -= plant.value;
+    gameState.energy -= 5;
+    
+    gameState.plots[emptyPlot] = {
+        plant: plant,
+        plantedAt: Date.now(),
+        growTime: plant.growTime * 1000,
+        ready: false
+    };
+    
+    updatePlot(emptyPlot, gameState.plots[emptyPlot]);
+    updateUI();
+    saveGame();
+    closeModal('marketModal');
+    
+    showFloatingText(`Planted ${plant.name}!`, window.innerWidth / 2, 200, '#4ade80');
+}
+
+// Show locked message
+function showLockedMessage() {
+    showFloatingText('Level up to unlock!', event.clientX, event.clientY, '#ef4444');
+}
+
+// Open greenhouse
+function openGreenhouse() {
+    showFloatingText('Greenhouse coming soon!', window.innerWidth / 2, 200);
+}
+
+// Open apothecary  
+function openApothecary()
     </script>
 </body>
 </html>
