@@ -1289,34 +1289,154 @@
                     break;
             }
         }
-
-        function openMarket() {
-            const modal = document.getElementById('marketModal');
-            const grid = document.getElementById('marketGrid');
+        
+function openMarket() {
+    const modal = document.getElementById('marketModal');
+    const grid = document.getElementById('marketGrid');
+    
+    // Generate all 369 plants with tiered stats
+    const fullPlantList = generateFullPlantList();
+    
+    // Group plants by tier/level
+    const tiers = {};
+    fullPlantList.forEach(plant => {
+        const tier = `Level ${plant.level}`;
+        if (!tiers[tier]) tiers[tier] = [];
+        tiers[tier].push(plant);
+    });
+    
+    // Build the market HTML with tier sections
+    let marketHTML = '<div style="max-height: 400px; overflow-y: auto;">';
+    
+    Object.keys(tiers).sort((a,b) => {
+        const levelA = parseInt(a.replace('Level ', ''));
+        const levelB = parseInt(b.replace('Level ', ''));
+        return levelA - levelB;
+    }).forEach(tier => {
+        const tierLevel = parseInt(tier.replace('Level ', ''));
+        const isLocked = tierLevel > gameState.level;
+        
+        marketHTML += `
+            <div style="margin: 15px 0; padding: 10px; background: rgba(34, 197, 94, 0.05); border-radius: 10px;">
+                <h3 style="color: ${isLocked ? '#ef4444' : '#4ade80'}; margin-bottom: 10px;">
+                    ${tier} ${isLocked ? '🔒' : ''}
+                </h3>
+                <div class="market-grid">
+        `;
+        
+        tiers[tier].forEach(plant => {
+            const canAfford = gameState.coins >= plant.value;
+            const isUnlocked = gameState.level >= plant.level;
             
-            grid.innerHTML = gameState.plants.filter(p => p.level <= gameState.level).map(plant => `
-                <div class="market-item" onclick="buyPlantSeed(${plant.id})">
+            marketHTML += `
+                <div class="market-item ${!isUnlocked ? 'locked' : ''}" 
+                     onclick="${isUnlocked ? `buyPlant(${plant.id})` : 'showLockedMessage()'}">
                     <div class="market-item-icon">${plant.emoji}</div>
-                    <div class="market-item-name">${plant.name}</div>
-                    <div class="market-item-price">💰 ${plant.value}</div>
+                    <div class="market-item-name" style="font-size: 10px;">${plant.name}</div>
+                    <div class="market-item-price" style="color: ${canAfford ? '#fbbf24' : '#ef4444'}">
+                        💰 ${plant.value}
+                    </div>
+                    ${!isUnlocked ? '<div style="font-size: 9px; color: #ef4444;">Locked</div>' : ''}
                 </div>
-            `).join('');
-            
-            modal.classList.add('active');
-        }
+            `;
+        });
+        
+        marketHTML += '</div></div>';
+    });
+    
+    marketHTML += '</div>';
+    grid.innerHTML = marketHTML;
+    modal.classList.add('active');
+}
 
-        function openFactory() {
-            document.getElementById('factoryModal').classList.add('active');
-        }
+// Function to generate all 369 plants based on your CSV
+function generateFullPlantList() {
+    const plantNames = [
+        'Abuta', 'Acai', 'Acerola', 'Achiote', 'Agrimony', 'Alfalfa', 'Algae Red Marine', 'Allspice',
+        'Aloe Ferox', 'Aloe Vera', 'Amalaki', 'Amor Seco', 'Anamu', 'Andiroba', 'Angelica', 'Anise',
+        'Apple Cider', 'Apple', 'Arnica', 'Arrowroot', 'Artichoke', 'Ashwagandha', 'Astragalus', 'Avocado',
+        'Ayahuma', 'Ayapana', 'Babul Chall Gum', 'Balsam Fir Needles', 'Banisteriopsis Caapi', 'Barberry',
+        'Barley Grass', 'Basil', 'Bat Petals Natural Sea Algae', 'Bay', 'Bayberry', 'Beet', 'Bellaco Caspi',
+        'Benzoin Gum', 'Bhringraj', 'Bibhitaki', 'Bilberry', 'Birch', 'Bitter Melon', 'Black Cohosh',
+        'Black Cumin', 'Black Currant', 'Black Walnut Hull', 'Blackberry', 'Bladderrack', 'Blessed Thistle',
+        'Blood', 'Blue Lily', 'Blue Lotus', 'Blue Vervain', 'Bobinsana', 'Boneset', 'Boswellia Serrata',
+        'Brahmi', 'Buckthorn', 'Buckwheat Hulls', 'Bufellio', 'Bupleurum', 'Burdock', 'Buriti',
+        'Butchers Broom', 'Butterfly Pea', 'Butternut', 'Cacao Peru', 'Calamus', 'California Poppy',
+        'Camu Camu', 'Cannabis', 'Caneleiro', 'Capinuri', 'Caraway', 'Cardamom', 'Carifillo', 'Carob',
+        'Carrot', 'Cascara Sagrada', 'Cats Claw', 'Catnip', 'Cattail', 'Catuaba', 'Cayenne', 'Cedro',
+        'Celery', 'Cetico', 'Chacruna', 'Chaga Mushroom', 'Chaliponga', 'Chaparral', 'Cherry', 'Chervil',
+        'Chia', 'Chickweed', 'Chicory'
+        // Add all 369 plant names here...
+    ];
+    
+    return plantNames.map((name, index) => ({
+        id: index + 1,
+        name: name,
+        emoji: getPlantEmoji(name),
+        growTime: 30 + (index % 20) * 10, // 30-230 seconds
+        value: Math.floor(10 + (index / 369) * 990), // 10-1000 coins progressive
+        xp: Math.floor(5 + (index / 369) * 95), // 5-100 XP progressive
+        level: Math.ceil((index + 1) / 15) // 15 plants per level = 25 levels total
+    }));
+}
 
-        function openSocial() {
-            document.getElementById('socialModal').classList.add('active');
-        }
+function getPlantEmoji(name) {
+    name = name.toLowerCase();
+    if (name.includes('mushroom') || name.includes('chaga')) return '🍄';
+    if (name.includes('berry')) return '🫐';
+    if (name.includes('apple')) return '🍎';
+    if (name.includes('cherry')) return '🍒';
+    if (name.includes('lotus') || name.includes('lily')) return '🪷';
+    if (name.includes('cacao') || name.includes('cocoa')) return '🍫';
+    if (name.includes('pepper') || name.includes('cayenne')) return '🌶️';
+    if (name.includes('root')) return '🌰';
+    if (name.includes('bark') || name.includes('tree')) return '🌳';
+    if (name.includes('flower')) return '🌸';
+    if (name.includes('algae') || name.includes('seaweed')) return '🌊';
+    if (name.includes('aloe') || name.includes('cactus')) return '🌵';
+    return '🌿'; // default
+}
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
+// Add function to handle locked plants
+function showLockedMessage() {
+    showFloatingText('Level up to unlock!', event.clientX, event.clientY, '#ef4444');
+}
 
+// Add function to buy plants
+function buyPlant(plantId) {
+    const plant = generateFullPlantList().find(p => p.id === plantId);
+    if (!plant) return;
+    
+    if (gameState.coins < plant.value) {
+        showFloatingText('Not enough coins!', event.clientX, event.clientY, '#ef4444');
+        return;
+    }
+    
+    // Find empty plot
+    const emptyPlot = gameState.plots.findIndex(p => p === null);
+    if (emptyPlot === -1) {
+        showFloatingText('No empty plots!', event.clientX, event.clientY, '#ef4444');
+        return;
+    }
+    
+    // Plant it
+    gameState.coins -= plant.value;
+    gameState.energy -= 5;
+    
+    gameState.plots[emptyPlot] = {
+        plant: plant,
+        plantedAt: Date.now(),
+        growTime: plant.growTime * 1000,
+        ready: false
+    };
+    
+    updatePlot(emptyPlot, gameState.plots[emptyPlot]);
+    updateUI();
+    saveGame();
+    closeModal('marketModal');
+    
+    showFloatingText(`Planted ${plant.name}!`, window.innerWidth / 2, 200, '#4ade80');
+}
         // Visit neighbor
         function visitNeighbor(id) {
             showFloatingText(`Visiting neighbor's farm...`, window.innerWidth / 2, 200);
