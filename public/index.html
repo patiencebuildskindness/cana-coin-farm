@@ -1492,25 +1492,190 @@
             }
         }
 
-        // Harvest crop
-        function harvestCrop(plotId) {
-            const plot = gameState.plots[plotId];
-            if (!plot || !plot.ready) return;
-            
-            const xpGain = plot.plant.xp;
-            const herbsGain = 1 + Math.floor(Math.random() * 3);
-            
-            gameState.xp += xpGain;
-            gameState.herbs += herbsGain;
-            gameState.coopProgress += herbsGain;
-            
-            // Add to inventory
-            if (!gameState.inventory[plot.plant.id]) {
-                gameState.inventory[plot.plant.id] = { plant: plot.plant, count: 0 };
-            }
-            gameState.inventory[plot.plant.id].count += herbsGain;
-            
-            // Clear plot
+       // Enhanced harvest with inventory system
+function harvestCrop(plotId) {
+    const plot = gameState.plots[plotId];
+    if (!plot || !plot.ready) return;
+    
+    const xpGain = plot.plant.xp;
+    const quantity = 1 + Math.floor(Math.random() * 3); // 1-3 plants per harvest
+    
+    gameState.xp += xpGain;
+    gameState.coopProgress += quantity;
+    
+    // Add to inventory
+    if (!gameState.inventory[plot.plant.id]) {
+        gameState.inventory[plot.plant.id] = {
+            plant: plot.plant,
+            quantity: 0
+        };
+    }
+    gameState.inventory[plot.plant.id].quantity += quantity;
+    
+function openInventory() {
+    const modal = document.getElementById('inventoryModal');
+    if (!modal) {
+        // Create inventory modal if it doesn't exist
+        const modalHTML = `
+            <div class="modal" id="inventoryModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span class="modal-title">📦 Your Inventory</span>
+                        <button class="close-btn" onclick="closeModal('inventoryModal')">✖</button>
+                    </div>
+                    <div id="inventoryContent"></div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    const inventoryContent = document.getElementById('inventoryContent');
+    const inventoryItems = Object.values(gameState.inventory).filter(item => item.quantity > 0);
+    
+    if (inventoryItems.length === 0) {
+        inventoryContent.innerHTML = `
+            <div style="text-align: center; padding: 40px; opacity: 0.6;">
+                Your inventory is empty. Start harvesting plants!
+            </div>
+        `;
+    } else {
+        // Calculate total value
+        const totalValue = inventoryItems.reduce((sum, item) => {
+            return sum + (item.plant.value * 3 * item.quantity);
+        }, 0);
+        
+        inventoryContent.innerHTML = `
+            <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold;">Total Inventory Value:</span>
+                    <span style="color: #fbbf24; font-size: 20px; font-weight: bold;">💰 ${totalValue}</span>
+                </div>
+                <button class="item-action" onclick="sellAllInventory()" style="width: 100%; margin-top: 10px;">
+                    Sell Everything
+                </button>
+            </div>
+            <div class="inventory-grid" style="max-height: 400px; overflow-y: auto;">
+                ${inventoryItems.map(item => {
+                    const sellPrice = item.plant.value * 3; // 3x buy price
+                    const totalSellPrice = sellPrice * item.quantity;
+                    return `
+                        <div class="inventory-item" style="padding: 15px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                        <span style="font-size: 30px;">${item.plant.emoji}</span>
+                                        <div>
+                                            <div style="font-weight: bold; color: #4ade80;">${item.plant.name}</div>
+                                            <div style="font-size: 12px; opacity: 0.8;">Quantity: ${item.quantity}</div>
+                                        </div>
+                                    </div>
+                                    <div style="font-size: 11px; margin-top: 5px;">
+                                        <span style="opacity: 0.7;">Price each:</span> 
+                                        <span style="color: #fbbf24;">💰 ${sellPrice}</span>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; color: #fbbf24; font-weight: bold; margin-bottom: 5px;">
+                                        💰 ${totalSellPrice}
+                                    </div>
+                                    <button class="action-btn" onclick="sellItem(${item.plant.id}, ${item.quantity})" style="padding: 8px 15px;">
+                                        Sell
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+    
+    document.getElementById('inventoryModal').classList.add('active');
+}
+    // Sell specific item
+function sellItem(plantId, maxQuantity) {
+    const item = gameState.inventory[plantId];
+    if (!item || item.quantity === 0) return;
+    
+    const sellPrice = item.plant.value * 3;
+    let quantity = maxQuantity;
+    
+    if (maxQuantity > 1) {
+        const input = prompt(`How many ${item.plant.name} to sell? (Max: ${maxQuantity})`, maxQuantity);
+        if (!input) return;
+        quantity = Math.min(parseInt(input) || 0, maxQuantity);
+        if (quantity <= 0) return;
+    }
+    
+    const totalEarnings = sellPrice * quantity;
+    
+    // Update inventory
+    item.quantity -= quantity;
+    if (item.quantity <= 0) {
+        delete gameState.inventory[plantId];
+    }
+    
+    // Add coins
+    gameState.coins += totalEarnings;
+    
+    // Show feedback
+    showFloatingText(`+💰 ${totalEarnings}`, window.innerWidth / 2, 200, '#fbbf24');
+    
+    // Update displays
+    updateUI();
+    saveGame();
+    openInventory(); // Refresh inventory display
+}
+
+// Sell all inventory
+function sellAllInventory() {
+    const inventoryItems = Object.values(gameState.inventory).filter(item => item.quantity > 0);
+    
+    if (inventoryItems.length === 0) return;
+    
+    if (!confirm('Sell your entire inventory?')) return;
+    
+    let totalEarnings = 0;
+    
+    inventoryItems.forEach(item => {
+        const sellPrice = item.plant.value * 3;
+        totalEarnings += sellPrice * item.quantity;
+    });
+    
+    // Clear inventory
+    gameState.inventory = {};
+    
+    // Add coins
+    gameState.coins += totalEarnings;
+    
+    // Show feedback
+    showFloatingText(`+💰 ${totalEarnings}!`, window.innerWidth / 2, 200, '#fbbf24');
+    
+    // Update displays
+    updateUI();
+    saveGame();
+    openInventory();
+}
+    
+    // Clear plot
+    gameState.plots[plotId] = null;
+    document.getElementById(`plot-${plotId}`).className = 'plot';
+    document.getElementById(`plot-${plotId}`).innerHTML = '';
+    
+    // Show rewards
+    showFloatingText(`+${xpGain} XP`, event.clientX - 20, event.clientY, '#4ade80');
+    showFloatingText(`+${quantity} ${plot.plant.emoji}`, event.clientX + 20, event.clientY, '#fbbf24');
+    
+    checkLevelUp();
+    updateUI();
+    saveGame();
+    
+    // Refresh inventory if it's open
+    if (document.getElementById('inventoryModal') && document.getElementById('inventoryModal').classList.contains('active')) {
+        openInventory();
+    }
+}
             gameState.plots[plotId] = null;
             document.getElementById(`plot-${plotId}`).className = 'plot';
             document.getElementById(`plot-${plotId}`).innerHTML = '';
@@ -1641,27 +1806,27 @@
         setInterval(updateWeather, 300000);
 
         // Modal controls
-        function showView(view) {
-            // Update nav
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            event.target.closest('.nav-item').classList.add('active');
-            
-            // Show appropriate modal
-            switch(view) {
-                case 'market':
-                    openMarket();
-                    break;
-                case 'social':
-                    openSocial();
-                    break;
-                case 'inventory':
-                    openInventory();
-                    break;
-                case 'quests':
-                    showFloatingText('Quests coming soon!', window.innerWidth / 2, 200);
-                    break;
-            }
-        }
+      function showView(view) {
+    // Update nav
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    event.target.closest('.nav-item').classList.add('active');
+    
+    // Show appropriate modal
+    switch(view) {
+        case 'market':
+            openMarket();
+            break;
+        case 'social':
+            openSocial();
+            break;
+        case 'inventory':
+            openInventory(); // Now uses the new function
+            break;
+        case 'quests':
+            showFloatingText('Quests coming soon!', window.innerWidth / 2, 200);
+            break;
+    }
+}
         
 function openMarket() {
     const modal = document.getElementById('marketModal');
