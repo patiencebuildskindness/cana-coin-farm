@@ -1754,18 +1754,21 @@ function sellAllInventory() {
             return `${Math.floor(seconds / 3600)}h`;
         }
 
-        // Update UI
         function updateUI() {
-            document.getElementById('playerLevel').textContent = gameState.level;
-            document.getElementById('farmNumber').textContent = gameState.currentFarm;
-            document.getElementById('playerXP').textContent = gameState.xp;
-            document.getElementById('coins').textContent = gameState.coins;
-            document.getElementById('gems').textContent = gameState.gems;
-            document.getElementById('herbs').textContent = gameState.herbs;
-            document.getElementById('extracts').textContent = gameState.extracts;
-            document.getElementById('energy').textContent = gameState.energy;
-            document.getElementById('energyBar').style.width = (gameState.energy / gameState.maxEnergy * 100) + '%';
-        }
+    document.getElementById('playerLevel').textContent = gameState.level;
+    document.getElementById('farmNumber').textContent = gameState.currentFarm;
+    document.getElementById('playerXP').textContent = gameState.xp;
+    document.getElementById('coins').textContent = gameState.coins;
+    document.getElementById('gems').textContent = gameState.gems;
+    
+    // Calculate total herbs in inventory
+    const totalHerbs = Object.values(gameState.inventory).reduce((sum, item) => sum + (item.quantity || 0), 0);
+    document.getElementById('herbs').textContent = totalHerbs;
+    
+    document.getElementById('extracts').textContent = gameState.extracts;
+    document.getElementById('energy').textContent = gameState.energy;
+    document.getElementById('energyBar').style.width = (gameState.energy / gameState.maxEnergy * 100) + '%';
+}
 
         // Save game
         function saveGame() {
