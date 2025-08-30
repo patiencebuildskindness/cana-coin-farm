@@ -1404,6 +1404,8 @@
                 grid.appendChild(plot);
             }
         }
+       
+plots: Array(16).fill(null), // Changed from 64 to 16 for mobile
 
         // Handle plot click
         function handlePlotClick(plotId) {
