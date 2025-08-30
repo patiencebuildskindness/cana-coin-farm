@@ -1991,7 +1991,6 @@ function buyPlant(plantId) {
 
         // Auto-save every 30 seconds
         setInterval(saveGame, 30000);
-        // Add these missing functions:
 
 // Buy plant from market
 function buyPlant(plantId) {
@@ -2034,13 +2033,51 @@ function showLockedMessage() {
     showFloatingText('Level up to unlock!', event.clientX, event.clientY, '#ef4444');
 }
 
-// Open greenhouse
+// Building functions
 function openGreenhouse() {
     showFloatingText('Greenhouse coming soon!', window.innerWidth / 2, 200);
 }
 
-// Open apothecary  
-function openApothecary()
+function openApothecary() {
+    showFloatingText('Apothecary coming soon!', window.innerWidth / 2, 200);
+}
+
+function openLibrary() {
+    showFloatingText('Library coming soon!', window.innerWidth / 2, 200);
+}
+
+function openFishPond() {
+    showFloatingText('Koi Pond coming soon!', window.innerWidth / 2, 200);
+}
+
+// Visit neighbor
+function visitNeighbor(id) {
+    showFloatingText('Visiting neighbor...', window.innerWidth / 2, 200);
+}
+
+// Social functions
+function sendGift(friendId) {
+    showFloatingText('Gift sent!', window.innerWidth / 2, 200);
+}
+
+function helpFriend(friendId) {
+    showFloatingText('Helped friend!', window.innerWidth / 2, 200);
+}
+
+// Show plot info
+function showPlotInfo(plotId) {
+    const plot = gameState.plots[plotId];
+    if (!plot) return;
+    
+    const timeLeft = (plot.plantedAt + plot.growTime) - Date.now();
+    const seconds = Math.ceil(timeLeft / 1000);
+    showFloatingText(`Ready in ${seconds} seconds`, event.clientX, event.clientY);
+}
+
+// Generate full plant list (if missing)
+function generateFullPlantList() {
+    return gameState.plants;
+}
     </script>
 </body>
 </html>
