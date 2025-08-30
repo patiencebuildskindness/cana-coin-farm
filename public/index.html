@@ -2078,6 +2078,12 @@ function showPlotInfo(plotId) {
 function generateFullPlantList() {
     return gameState.plants;
 }
+        // Initialize the game when page loads
+window.addEventListener('load', function() {
+    initFarmGrid();
+    updateUI();
+    updateWeather();
+});
     </script>
 </body>
 </html>
