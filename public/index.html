@@ -114,11 +114,10 @@
 
         .farm-grid {
             display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(8, 60px);
+            grid-template-columns: repeat(4, 50px);
+            grid-template-rows: repeat(4, 50px);
             gap: 5px;
-            margin: 20px auto;
-            width: fit-content;
+            margin: 20px auto;            width: fit-content;
             transform: perspective(1000px) rotateX(35deg);
             transform-style: preserve-3d;
         }
@@ -991,16 +990,34 @@
             
             // Plants database
             plants: [
-                {id: 1, name: 'Mint', emoji: '🌿', growTime: 30, value: 10, xp: 5, level: 1},
-                {id: 2, name: 'Basil', emoji: '🌱', growTime: 45, value: 15, xp: 7, level: 1},
-                {id: 3, name: 'Aloe', emoji: '🌵', growTime: 60, value: 25, xp: 10, level: 2},
-                {id: 4, name: 'Lavender', emoji: '💜', growTime: 90, value: 40, xp: 15, level: 3},
-                {id: 5, name: 'Echinacea', emoji: '🌸', growTime: 120, value: 60, xp: 20, level: 5},
-                {id: 6, name: 'Ginseng', emoji: '⭐', growTime: 180, value: 100, xp: 30, level: 8},
-                {id: 7, name: 'Turmeric', emoji: '🟡', growTime: 150, value: 80, xp: 25, level: 6},
-                {id: 8, name: 'Ginger', emoji: '🫚', growTime: 100, value: 50, xp: 18, level: 4},
-                {id: 9, name: 'Chamomile', emoji: '🌼', growTime: 70, value: 30, xp: 12, level: 2},
-                {id: 10, name: 'Valerian', emoji: '🌺', growTime: 140, value: 70, xp: 22, level: 7}
+                {cat > generate-plants.js << 'EOF'
+// This will read your CSV and generate the game-ready array
+const plants = require('./plants.csv'); // Your CSV file
+
+const gameReady = plants.map((plant, index) => ({
+  id: index + 1,
+  name: plant.common_name,
+  scientific: plant.scientific_name,
+  emoji: getEmoji(plant.common_name), // Helper function
+  growTime: 30 + (index * 2), // Progressive growth times
+  value: 10 + Math.floor(index / 3) * 5, // Progressive prices
+  xp: 5 + Math.floor(index / 5), // Progressive XP
+  level: Math.ceil((index + 1) / 15) // Unlock 15 plants per level
+}));
+
+function getEmoji(name) {
+  // Simple emoji matcher
+  if (name.includes('Mushroom')) return '🍄';
+  if (name.includes('Berry')) return '🫐';
+  if (name.includes('Root')) return '🌰';
+  // ... add more
+  return '🌿'; // default
+}
+
+console.log('plants: ' + JSON.stringify(gameReady, null, 2));
+EOF
+
+node generate-plants.js
             ],
             
             // Inventory
@@ -1011,7 +1028,6 @@
         const saved = localStorage.getItem('canaGameState');
         if (saved) {
             gameState = {...gameState, ...JSON.parse(saved)};
-        }
 
         // Initialize farm grid
         function initFarmGrid() {
@@ -1322,7 +1338,31 @@
             showFloatingText(`Visiting neighbor's farm...`, window.innerWidth / 2, 200);
             // Would load neighbor's farm view
         }
-
+function openPlantLibrary() {
+    // ... modal creation code ...
+    
+    const content = document.getElementById('libraryContent');
+    let html = '<div style="display: grid; gap: 5px;">';
+    
+    gameState.plants.forEach(plant => {
+        html += `
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; 
+                        border-radius: 8px; padding: 8px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 24px;">${plant.emoji}</span>
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; color: #4ade80; font-size: 14px;">${plant.name}</div>
+                    <div style="font-size: 11px; opacity: 0.7;">
+                        Level ${plant.level} • 💰${plant.value} • ⏱️${plant.growTime}s • ✨${plant.xp}XP
+                    </div>
+                </div>
+            </div>
+        `;  // Make sure this backtick is here
+    });
+    
+    html += '</div>';
+    content.innerHTML = html;
+    document.getElementById('libraryModal').classList.add('active');
+}
         // Initialize
         initFarmGrid();
         updateUI();
