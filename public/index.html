@@ -1134,6 +1134,16 @@
             // Add to inventory
             if (!gameState.inventory[plot.plant.id]) {
                 gameState.inventory[plot.plant.id] = { plant: plot.plant, count: 0 };
+               
+                if (!gameState.inventory[plot.plant.id]) {
+                     gameState.inventory[plot.plant.id] = {
+                     plant: plot.plant,
+                     quantity: 0,
+                     totalHarvested: 0  // Add this
+    };
+}
+gameState.inventory[plot.plant.id].quantity += quantity;
+gameState.inventory[plot.plant.id].totalHarvested += quantity;  // Add this
             }
             gameState.inventory[plot.plant.id].count += herbsGain;
             
