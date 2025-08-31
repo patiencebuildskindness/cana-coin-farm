@@ -794,6 +794,46 @@
                     <span class="building-icon">🏭</span>
                     <span class="building-name">Extract Lab</span>
                 </div>
+                function openPlantLibrary() {
+    // Create the library modal if it doesn't exist
+    if (!document.getElementById('libraryModal')) {
+        const libraryModalHTML = `
+            <div class="modal" id="libraryModal">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <span class="modal-title">📚 Plant Encyclopedia - 369 Plants</span>
+                        <button class="close-btn" onclick="closeModal('libraryModal')">✖</button>
+                    </div>
+                    <div id="libraryContent" style="max-height: 500px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', libraryModalHTML);
+    }
+    
+    // Show all plants in a simple list
+    const content = document.getElementById('libraryContent');
+    let html = '<div style="display: grid; gap: 5px;">';
+    
+    gameState.plants.forEach(plant => {
+        html += `
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; 
+                        border-radius: 8px; padding: 8px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 24px;">${plant.emoji}</span>
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; color: #4ade80; font-size: 14px;">${plant.name}</div>
+                    <div style="font-size: 11px; opacity: 0.7;">
+                        Level ${plant.level} • 💰${plant.value} • ⏱️${plant.growTime}s • ✨${plant.xp}XP
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    content.innerHTML = html;
+    document.getElementById('libraryModal').classList.add('active');
+}
                 <div class="building" onclick="openGreenhouse()">
                     <span class="building-icon">🏡</span>
                     <span class="building-name">Greenhouse</span>
@@ -802,10 +842,10 @@
                     <span class="building-icon">⚗️</span>
                     <span class="building-name">Apothecary</span>
                 </div>
-                <div class="building" onclick="openLibrary()">
-                    <span class="building-icon">📚</span>
-                    <span class="building-name">Library</span>
-                </div>
+              <div class="building" onclick="openPlantLibrary()">
+    <span class="building-icon">📚</span>
+    <span class="building-name">Library</span>
+</div>
                 <div class="building" onclick="openFishPond()">
                     <span class="building-icon">🎣</span>
                     <span class="building-name">Koi Pond</span>
@@ -1150,6 +1190,16 @@ node generate-plants.js
             // Add to inventory
             if (!gameState.inventory[plot.plant.id]) {
                 gameState.inventory[plot.plant.id] = { plant: plot.plant, count: 0 };
+               
+                if (!gameState.inventory[plot.plant.id]) {
+                     gameState.inventory[plot.plant.id] = {
+                     plant: plot.plant,
+                     quantity: 0,
+                     totalHarvested: 0  // Add this
+    };
+}
+gameState.inventory[plot.plant.id].quantity += quantity;
+gameState.inventory[plot.plant.id].totalHarvested += quantity;  // Add this
             }
             gameState.inventory[plot.plant.id].count += herbsGain;
             
@@ -1371,5 +1421,183 @@ function openPlantLibrary() {
         // Auto-save every 30 seconds
         setInterval(saveGame, 30000);
     </script>
+<const libraryModalHTML = `
+<div class="modal" id="libraryModal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <span class="modal-title">📚 Plant Encyclopedia</span>
+            <button class="close-btn" onclick="closeModal('libraryModal')">✖</button>
+        </div>
+        <div style="padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 10px; margin-bottom: 15px;">
+            <input type="text" id="plantSearch" placeholder="Search plants..." 
+                   style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #22c55e; 
+                          border-radius: 8px; color: #e0f2e9; font-size: 14px;"
+                   oninput="filterPlants()">
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px;">
+                <span>Total: <span style="color: #4ade80;">369 plants</span></span>
+                <span>Discovered: <span id="discoveredCount" style="color: #fbbf24;">0</span></span>
+                <span>Completion: <span id="completionPercent" style="color: #a855f7;">0%</span></span>
+            </div>
+        </div>
+        <div id="libraryContent" style="max-height: 500px; overflow-y: auto;"></div>
+    </div>
+</div>
+`;
+document.body.insertAdjacentHTML('beforeend', libraryModalHTML);
+    function openLibrary() {
+    const modal = document.getElementById('libraryModal');
+    const content = document.getElementById('libraryContent');
+    
+    // Track discovered plants (ones that have been harvested)
+    const discoveredPlants = new Set();
+    Object.values(gameState.inventory).forEach(item => {
+        if (item.quantity > 0 || item.plant) {
+            discoveredPlants.add(item.plant ? item.plant.id : item.id);
+        }
+    });
+    
+    // Update discovery stats
+    document.getElementById('discoveredCount').textContent = discoveredPlants.size;
+    document.getElementById('completionPercent').textContent = 
+        Math.floor((discoveredPlants.size / 369) * 100) + '%';
+    
+    // Generate plant cards
+    let html = '<div style="display: grid; gap: 10px;">';
+    
+    gameState.plants.forEach(plant => {
+        const isDiscovered = discoveredPlants.has(plant.id);
+        const locked = plant.level > gameState.level;
+        
+        html += `
+            <div class="library-card" style="
+                background: ${isDiscovered ? 'rgba(34, 197, 94, 0.1)' : 'rgba(0, 0, 0, 0.3)'};
+                border: 1px solid ${isDiscovered ? '#22c55e' : '#374151'};
+                border-radius: 10px;
+                padding: 12px;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                transition: all 0.3s;
+                cursor: pointer;
+            " onclick="showPlantDetails(${plant.id})">
+                <div style="font-size: 30px; ${!isDiscovered ? 'filter: grayscale(1); opacity: 0.3;' : ''}">
+                    ${plant.emoji}
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; color: ${isDiscovered ? '#4ade80' : '#6b7280'};">
+                        ${isDiscovered ? plant.name : '???'}
+                    </div>
+                    <div style="font-size: 11px; opacity: 0.7; font-style: italic;">
+                        ${isDiscovered && plant.scientific ? plant.scientific : 'Unknown species'}
+                    </div>
+                    <div style="font-size: 10px; margin-top: 3px;">
+                        ${locked ? 
+                            `<span style="color: #ef4444;">🔒 Level ${plant.level}</span>` : 
+                            `<span style="color: #fbbf24;">💰 ${plant.value}</span> • 
+                             <span style="color: #3b82f6;">⏱️ ${plant.growTime}s</span> • 
+                             <span style="color: #a855f7;">✨ ${plant.xp} XP</span>`
+                        }
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    ${isDiscovered ? 
+                        `<div style="color: #22c55e; font-size: 20px;">✓</div>
+                         <div style="font-size: 9px;">Discovered</div>` :
+                        `<div style="color: #6b7280; font-size: 20px;">?</div>
+                         <div style="font-size: 9px;">Unknown</div>`
+                    }
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    content.innerHTML = html;
+    modal.classList.add('active');
+}
+
+// Filter plants by search
+function filterPlants() {
+    const searchTerm = document.getElementById('plantSearch').value.toLowerCase();
+    const cards = document.querySelectorAll('.library-card');
+    
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+    });
+}
+
+// Show detailed plant information
+function showPlantDetails(plantId) {
+    const plant = gameState.plants.find(p => p.id === plantId);
+    if (!plant) return;
+    
+    // Check if discovered
+    const isDiscovered = gameState.inventory[plantId] && gameState.inventory[plantId].quantity > 0;
+    
+    const detailHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <div style="font-size: 60px; margin-bottom: 10px;">${plant.emoji}</div>
+            <h2 style="color: #4ade80; margin-bottom: 5px;">${isDiscovered ? plant.name : '???'}</h2>
+            <div style="font-style: italic; opacity: 0.8; margin-bottom: 15px;">
+                ${isDiscovered && plant.scientific ? plant.scientific : 'Unknown species'}
+            </div>
+            
+            ${isDiscovered ? `
+                <div style="background: rgba(34, 197, 94, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left;">
+                        <div><strong>Growth Time:</strong> ${plant.growTime} seconds</div>
+                        <div><strong>Buy Price:</strong> 💰 ${plant.value}</div>
+                        <div><strong>Sell Price:</strong> 💰 ${plant.value * 3}</div>
+                        <div><strong>Experience:</strong> ✨ ${plant.xp} XP</div>
+                        <div><strong>Unlock Level:</strong> ${plant.level}</div>
+                        <div><strong>Rarity:</strong> ${getRarityFromLevel(plant.level)}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <strong>Times Harvested:</strong> ${gameState.inventory[plantId]?.totalHarvested || 0}
+                </div>
+            ` : `
+                <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 10px;">
+                    <div style="color: #ef4444;">🔒 Plant not yet discovered!</div>
+                    <div style="margin-top: 10px; font-size: 12px;">
+                        Unlocks at Level ${plant.level}
+                    </div>
+                </div>
+            `}
+            
+            <button class="item-action" onclick="closeModal('libraryModal'); openplantLibrary();" 
+                    style="margin-top: 15px;">
+                Back to Library
+            </button>
+        </div>
+    `;
+    
+    // Show in a temporary modal overlay
+    const detailModal = document.createElement('div');
+    detailModal.className = 'modal active';
+    detailModal.style.zIndex = '3000';
+    detailModal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            ${detailHTML}
+        </div>
+    `;
+    detailModal.onclick = function(e) {
+        if (e.target === detailModal) {
+            detailModal.remove();
+        }
+    };
+    document.body.appendChild(detailModal);
+}
+
+// Helper function for rarity
+function getRarityFromLevel(level) {
+    if (level <= 5) return '⚪ Common';
+    if (level <= 10) return '🟢 Uncommon';
+    if (level <= 15) return '🔵 Rare';
+    if (level <= 20) return '🟣 Epic';
+    return '🟡 Legendary';
+}
 </body>
 </html>
