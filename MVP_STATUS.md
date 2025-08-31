@@ -1,6 +1,6 @@
 # CANA Coin Farm - MVP Status
 
-## ✅ Completed (MVP Phase 1)
+## ✅ Completed
 - [x] Character movement system (grid-based)
 - [x] Basic plot/farming grid (10x10 expandable)
 - [x] 10 starter plants with growth cycles
@@ -9,26 +9,26 @@
 - [x] Energy system
 - [x] Day/season progression
 - [x] Basic inventory management
+- [x] **Complete save/load system with auto-save**
+- [x] **Companion planting with bonuses/penalties**
 
-## 🔄 Next Steps (Phase 2)
-- [ ] Companion planting bonuses
-- [ ] Soil health system
-- [ ] Save/load game state
-- [ ] Weather effects
-- [ ] More of the 369 plants
+## 🔄 Next Steps (Priority Order)
+- [ ] Expand to 50+ plants from the 369 database
+- [ ] Soil health system (N/P/K tracking)
+- [ ] Weather events (rain, drought, frost)
+- [ ] Buildings (drying rack, storage, greenhouse)
+- [ ] Seed quality tiers (heirloom, hybrid, GMO-free)
 
 ## 🎯 Future Phases
-- [ ] GPS integration
+- [ ] GPS integration for local climate
 - [ ] Real season sync
 - [ ] Plant photo scanning
 - [ ] Proof of Growth system
 - [ ] Multiplayer markets
 - [ ] Expand to 7000+ plants
 
-## Testing the MVP
-1. Open `public/game-mvp.html` in browser
-2. Use arrow keys/WASD to move
-3. Click "Till Soil" then plant seeds
-4. Water daily and harvest when ready
-5. Buy more seeds at market
-6. Expand land when you have 500 coins
+## Current Stats
+- **Version**: 1.2.0
+- **Plants**: 10 (goal: 369 → 7000+)
+- **Features**: Movement, Farming, Economy, Saves, Companions
+- **Education**: Companion planting, seasonal awareness

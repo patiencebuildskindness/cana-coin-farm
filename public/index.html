@@ -240,6 +240,8 @@
                 <li>Select seeds from inventory to plant</li>
                 <li>Water plants daily for growth</li>
                 <li>Harvest when ready!</li>
+                <li><strong>💚 Plant companions together for growth bonuses!</strong></li>
+                <li><strong>⚠️ Avoid planting antagonists near each other</strong></li>
             </ul>
         </div>
 
@@ -312,7 +314,9 @@
                 seedCost: 5,
                 season: ['Spring', 'Summer'],
                 waterNeeded: 3,
-                category: 'vegetable'
+                category: 'vegetable',
+                companions: ['basil', 'marigold', 'carrot'],
+                antagonists: ['wheat']
             },
             carrot: {
                 name: 'Carrot',
@@ -323,7 +327,9 @@
                 seedCost: 3,
                 season: ['Spring', 'Fall'],
                 waterNeeded: 2,
-                category: 'vegetable'
+                category: 'vegetable',
+                companions: ['tomato', 'lettuce', 'rosemary'],
+                antagonists: ['mint']
             },
             lettuce: {
                 name: 'Lettuce',
@@ -334,7 +340,9 @@
                 seedCost: 2,
                 season: ['Spring', 'Fall'],
                 waterNeeded: 4,
-                category: 'vegetable'
+                category: 'vegetable',
+                companions: ['carrot', 'marigold', 'mint'],
+                antagonists: []
             },
             basil: {
                 name: 'Basil',
@@ -345,7 +353,9 @@
                 seedCost: 4,
                 season: ['Spring', 'Summer'],
                 waterNeeded: 2,
-                category: 'herb'
+                category: 'herb',
+                companions: ['tomato', 'lettuce'],
+                antagonists: ['rosemary']
             },
             mint: {
                 name: 'Mint',
@@ -356,7 +366,9 @@
                 seedCost: 3,
                 season: ['Spring', 'Summer', 'Fall'],
                 waterNeeded: 3,
-                category: 'herb'
+                category: 'herb',
+                companions: ['lettuce', 'apple'],
+                antagonists: ['carrot']
             },
             rosemary: {
                 name: 'Rosemary',
@@ -367,7 +379,9 @@
                 seedCost: 6,
                 season: ['Spring', 'Summer', 'Fall'],
                 waterNeeded: 1,
-                category: 'herb'
+                category: 'herb',
+                companions: ['carrot', 'wheat'],
+                antagonists: ['basil']
             },
             sunflower: {
                 name: 'Sunflower',
@@ -378,7 +392,9 @@
                 seedCost: 8,
                 season: ['Summer'],
                 waterNeeded: 3,
-                category: 'flower'
+                category: 'flower',
+                companions: ['lettuce', 'wheat'],
+                antagonists: []
             },
             marigold: {
                 name: 'Marigold',
@@ -390,7 +406,8 @@
                 season: ['Spring', 'Summer', 'Fall'],
                 waterNeeded: 2,
                 category: 'flower',
-                companion: true  // Good companion plant
+                companions: ['tomato', 'lettuce', 'apple'],  // Pest deterrent
+                antagonists: []
             },
             wheat: {
                 name: 'Wheat',
@@ -401,7 +418,9 @@
                 seedCost: 10,
                 season: ['Spring', 'Fall'],
                 waterNeeded: 2,
-                category: 'grain'
+                category: 'grain',
+                companions: ['rosemary', 'sunflower'],
+                antagonists: ['tomato']
             },
             apple: {
                 name: 'Apple Tree',
@@ -413,7 +432,9 @@
                 season: ['Spring'],
                 waterNeeded: 3,
                 category: 'tree',
-                perennial: true  // Keeps producing
+                perennial: true,  // Keeps producing
+                companions: ['marigold', 'mint'],
+                antagonists: []
             }
         };
 
@@ -487,6 +508,8 @@
                 this.daysWithoutWater = 0;
                 this.health = 100;
                 this.harvestReady = false;
+                this.companionBonus = 0;  // Stores companion planting bonus
+                this.antagonistPenalty = 0;  // Stores antagonist penalty
             }
 
             till() {
@@ -494,6 +517,8 @@
                 this.plant = null;
                 this.growthStage = 0;
                 this.harvestReady = false;
+                this.companionBonus = 0;
+                this.antagonistPenalty = 0;
             }
 
             plantSeed(plantType) {
@@ -516,15 +541,30 @@
                     const plantData = PLANTS[this.plant];
                     
                     if (this.watered) {
-                        this.growthStage++;
+                        // Apply companion bonus to growth speed
+                        let growthRate = 1 + (this.companionBonus * 0.2) - (this.antagonistPenalty * 0.15);
+                        growthRate = Math.max(0.5, growthRate);  // Minimum 50% speed
+                        
+                        this.growthStage += growthRate;
+                        
                         if (this.growthStage >= plantData.growthTime) {
                             this.harvestReady = true;
+                            this.growthStage = plantData.growthTime;  // Cap at max
+                        }
+                        
+                        // Companion plants improve health recovery
+                        if (this.companionBonus > 0 && this.health < 100) {
+                            this.health = Math.min(100, this.health + (5 * this.companionBonus));
                         }
                     } else {
                         this.daysWithoutWater++;
-                        this.health = Math.max(0, this.health - 10);
+                        // Antagonists make plants more vulnerable
+                        const healthLoss = 10 + (this.antagonistPenalty * 5);
+                        this.health = Math.max(0, this.health - healthLoss);
                         if (this.health === 0) {
                             this.plant = null;  // Plant dies
+                            this.companionBonus = 0;
+                            this.antagonistPenalty = 0;
                         }
                     }
                     
@@ -540,6 +580,8 @@
                         this.growthStage = 0;
                         this.harvestReady = false;
                         this.tilled = false;
+                        this.companionBonus = 0;
+                        this.antagonistPenalty = 0;
                     } else {
                         // Perennial plants keep producing
                         this.growthStage = PLANTS[this.plant].growthTime - 1;
@@ -568,6 +610,18 @@
                     ctx.fillRect(x, y, tileSize, tileSize);
                 }
                 
+                // Companion bonus indicator - green glow
+                if (this.companionBonus > 0) {
+                    ctx.fillStyle = `rgba(76, 175, 80, ${0.15 * this.companionBonus})`;
+                    ctx.fillRect(x, y, tileSize, tileSize);
+                }
+                
+                // Antagonist penalty indicator - red glow
+                if (this.antagonistPenalty > 0) {
+                    ctx.fillStyle = `rgba(244, 67, 54, ${0.15 * this.antagonistPenalty})`;
+                    ctx.fillRect(x, y, tileSize, tileSize);
+                }
+                
                 // Grid lines
                 ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
                 ctx.strokeRect(x, y, tileSize, tileSize);
@@ -580,7 +634,7 @@
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     
-                    const stage = Math.min(this.growthStage, plantData.stages.length - 1);
+                    const stage = Math.min(Math.floor(this.growthStage), plantData.stages.length - 1);
                     const emoji = this.harvestReady ? plantData.emoji : plantData.stages[stage];
                     
                     // Health affects opacity
@@ -592,6 +646,22 @@
                         ctx.fillStyle = 'gold';
                         ctx.font = '12px Arial';
                         ctx.fillText('✨', x + tileSize - 10, y + 10);
+                    }
+                    
+                    // Show companion bonus indicator
+                    if (this.companionBonus > 0) {
+                        ctx.fillStyle = 'lime';
+                        ctx.font = '10px Arial';
+                        ctx.globalAlpha = 1;
+                        ctx.fillText('💚', x + 5, y + 12);
+                    }
+                    
+                    // Show antagonist penalty indicator
+                    if (this.antagonistPenalty > 0) {
+                        ctx.fillStyle = 'red';
+                        ctx.font = '10px Arial';
+                        ctx.globalAlpha = 1;
+                        ctx.fillText('⚠️', x + 5, y + tileSize - 5);
                     }
                     
                     ctx.restore();
@@ -619,6 +689,7 @@
                     this.initializeGrid();
                 } else {
                     // Game loaded successfully
+                    this.calculateCompanionBonuses();  // Recalculate after loading
                     this.showTooltip('Game loaded successfully!');
                 }
                 
@@ -656,6 +727,55 @@
 
             getPlot(x, y) {
                 return this.plots.find(p => p.x === x && p.y === y);
+            }
+
+            getAdjacentPlots(plot) {
+                const adjacent = [];
+                const directions = [
+                    { x: 0, y: -1 },  // up
+                    { x: 1, y: 0 },   // right
+                    { x: 0, y: 1 },   // down
+                    { x: -1, y: 0 }   // left
+                ];
+                
+                directions.forEach(dir => {
+                    const adjPlot = this.getPlot(plot.x + dir.x, plot.y + dir.y);
+                    if (adjPlot) {
+                        adjacent.push(adjPlot);
+                    }
+                });
+                
+                return adjacent;
+            }
+
+            calculateCompanionBonuses() {
+                // Reset all bonuses first
+                this.plots.forEach(plot => {
+                    plot.companionBonus = 0;
+                    plot.antagonistPenalty = 0;
+                });
+                
+                // Calculate new bonuses
+                this.plots.forEach(plot => {
+                    if (!plot.plant) return;
+                    
+                    const plantData = PLANTS[plot.plant];
+                    const adjacentPlots = this.getAdjacentPlots(plot);
+                    
+                    adjacentPlots.forEach(adjPlot => {
+                        if (!adjPlot.plant) return;
+                        
+                        // Check for companions
+                        if (plantData.companions && plantData.companions.includes(adjPlot.plant)) {
+                            plot.companionBonus++;
+                        }
+                        
+                        // Check for antagonists
+                        if (plantData.antagonists && plantData.antagonists.includes(adjPlot.plant)) {
+                            plot.antagonistPenalty++;
+                        }
+                    });
+                });
             }
 
             setupControls() {
@@ -717,6 +837,8 @@
                             delete this.inventory[this.selectedItem];
                             this.selectedItem = null;
                         }
+                        // Recalculate companion bonuses when a new plant is placed
+                        this.calculateCompanionBonuses();
                     }
                 }
                 
@@ -749,22 +871,41 @@
                     const harvested = plot.harvest();
                     if (harvested) {
                         const plantData = PLANTS[harvested];
-                        const price = this.calculateMarketPrice(harvested);
+                        const price = this.calculateMarketPrice(harvested, plot);
                         this.coins += price;
-                        this.showTooltip(`Harvested ${plantData.name} for ${price} coins!`);
+                        
+                        // Show bonus message if there was a companion bonus
+                        let message = `Harvested ${plantData.name} for ${price} coins!`;
+                        if (plot.companionBonus > 0) {
+                            message += ` (+${Math.round((plot.companionBonus * 15))}% companion bonus!)`;
+                        }
+                        this.showTooltip(message);
+                        
+                        // Recalculate companion bonuses after harvest
+                        this.calculateCompanionBonuses();
                     }
                     this.updateUI();
                     this.draw();
                 }
             }
 
-            calculateMarketPrice(plantType) {
+            calculateMarketPrice(plantType, plot) {
                 const plantData = PLANTS[plantType];
                 let price = plantData.basePrice;
                 
                 // Season bonus
                 if (plantData.season.includes(SEASONS[this.season])) {
                     price *= 1.2;
+                }
+                
+                // Companion bonus - better quality = higher price
+                if (plot && plot.companionBonus > 0) {
+                    price *= (1 + plot.companionBonus * 0.15);  // 15% per companion
+                }
+                
+                // Antagonist penalty - lower quality = lower price
+                if (plot && plot.antagonistPenalty > 0) {
+                    price *= (1 - plot.antagonistPenalty * 0.1);  // 10% penalty per antagonist
                 }
                 
                 // Random market fluctuation
@@ -780,6 +921,9 @@
                 if (this.day % DAYS_PER_SEASON === 0) {
                     this.season = (this.season + 1) % SEASONS.length;
                 }
+                
+                // Recalculate companion bonuses before growth
+                this.calculateCompanionBonuses();
                 
                 // Grow all plants
                 this.plots.forEach(plot => plot.grow());
@@ -824,6 +968,20 @@
                     const canBuy = this.coins >= plant.seedCost;
                     const inSeason = plant.season.includes(SEASONS[this.season]);
                     
+                    let companionInfo = '';
+                    if (plant.companions && plant.companions.length > 0) {
+                        companionInfo = '<br><small>💚 Good with: ' + 
+                            plant.companions.map(c => PLANTS[c] ? PLANTS[c].emoji : '').join(' ') + 
+                            '</small>';
+                    }
+                    
+                    let antagonistInfo = '';
+                    if (plant.antagonists && plant.antagonists.length > 0) {
+                        antagonistInfo = '<br><small>⚠️ Avoid: ' + 
+                            plant.antagonists.map(a => PLANTS[a] ? PLANTS[a].emoji : '').join(' ') + 
+                            '</small>';
+                    }
+                    
                     marketHTML += `
                         <div style="padding: 10px; border: 1px solid #ddd; margin: 5px; border-radius: 5px; ${!canBuy ? 'opacity: 0.5;' : ''}">
                             <span style="font-size: 1.5em;">${plant.emoji}</span>
@@ -832,11 +990,20 @@
                             <br>Sells for: ~${plant.basePrice} coins
                             <br>Season: ${plant.season.join(', ')}
                             ${inSeason ? '<span style="color: green;">✓ In Season</span>' : '<span style="color: red;">✗ Out of Season</span>'}
+                            ${companionInfo}
+                            ${antagonistInfo}
                             <br><button onclick="game.buySeeds('${key}')" ${!canBuy ? 'disabled' : ''}>Buy Seeds</button>
                         </div>
                     `;
                 });
                 
+                marketHTML += '</div>';
+                marketHTML += '<br><div style="padding: 10px; background: #e8f5e9; border-radius: 5px;">';
+                marketHTML += '<strong>💚 Companion Planting Tips:</strong><br>';
+                marketHTML += '• Plant companions next to each other for +20% growth speed per neighbor<br>';
+                marketHTML += '• Companions also increase harvest value by +15% per neighbor<br>';
+                marketHTML += '• Avoid antagonists - they reduce growth by 15% and increase vulnerability<br>';
+                marketHTML += '• Marigolds are great pest deterrents for most plants!';
                 marketHTML += '</div>';
                 
                 // Simple modal
@@ -911,10 +1078,60 @@
                     if (plot.plant) {
                         const plantData = PLANTS[plot.plant];
                         info += `Plant: ${plantData.name}<br>`;
-                        info += `Growth: ${plot.growthStage}/${plantData.growthTime}<br>`;
+                        info += `Growth: ${Math.floor(plot.growthStage)}/${plantData.growthTime}<br>`;
                         info += `Health: ${plot.health}%<br>`;
                         info += `Watered: ${plot.watered ? 'Yes' : 'No'}<br>`;
+                        
+                        // Show companion/antagonist info
+                        if (plot.companionBonus > 0) {
+                            info += `<span style="color: green;">💚 Companion Bonus: +${plot.companionBonus * 20}% growth</span><br>`;
+                        }
+                        if (plot.antagonistPenalty > 0) {
+                            info += `<span style="color: red;">⚠️ Antagonist Penalty: -${plot.antagonistPenalty * 15}% growth</span><br>`;
+                        }
+                        
                         info += `Ready: ${plot.harvestReady ? 'Yes! 🌟' : 'No'}`;
+                        
+                        // Show companion recommendations
+                        if (plantData.companions && plantData.companions.length > 0) {
+                            info += `<br><br><strong>Good Companions:</strong><br>`;
+                            plantData.companions.forEach(comp => {
+                                if (PLANTS[comp]) {
+                                    info += `${PLANTS[comp].emoji} ${PLANTS[comp].name} `;
+                                }
+                            });
+                        }
+                        
+                        if (plantData.antagonists && plantData.antagonists.length > 0) {
+                            info += `<br><strong>Avoid Near:</strong><br>`;
+                            plantData.antagonists.forEach(ant => {
+                                if (PLANTS[ant]) {
+                                    info += `${PLANTS[ant].emoji} ${PLANTS[ant].name} `;
+                                }
+                            });
+                        }
+                    } else if (this.selectedItem && PLANTS[this.selectedItem]) {
+                        // Show companion info for selected seed
+                        const plantData = PLANTS[this.selectedItem];
+                        info += `<br><strong>Selected: ${plantData.name}</strong><br>`;
+                        
+                        if (plantData.companions && plantData.companions.length > 0) {
+                            info += `<br>Good Companions:<br>`;
+                            plantData.companions.forEach(comp => {
+                                if (PLANTS[comp]) {
+                                    info += `${PLANTS[comp].emoji} ${PLANTS[comp].name} `;
+                                }
+                            });
+                        }
+                        
+                        if (plantData.antagonists && plantData.antagonists.length > 0) {
+                            info += `<br>Avoid Near:<br>`;
+                            plantData.antagonists.forEach(ant => {
+                                if (PLANTS[ant]) {
+                                    info += `${PLANTS[ant].emoji} ${PLANTS[ant].name} `;
+                                }
+                            });
+                        }
                     }
                     plotInfo.innerHTML = info;
                 }
@@ -977,7 +1194,9 @@
                             watered: plot.watered,
                             daysWithoutWater: plot.daysWithoutWater,
                             health: plot.health,
-                            harvestReady: plot.harvestReady
+                            harvestReady: plot.harvestReady,
+                            companionBonus: plot.companionBonus || 0,
+                            antagonistPenalty: plot.antagonistPenalty || 0
                         }))
                     };
                     
@@ -1041,6 +1260,8 @@
                         plot.daysWithoutWater = plotData.daysWithoutWater;
                         plot.health = plotData.health;
                         plot.harvestReady = plotData.harvestReady;
+                        plot.companionBonus = plotData.companionBonus || 0;
+                        plot.antagonistPenalty = plotData.antagonistPenalty || 0;
                         return plot;
                     });
                     
