@@ -1331,5 +1331,28 @@
         // Auto-save every 30 seconds
         setInterval(saveGame, 30000);
     </script>
+<const libraryModalHTML = `
+<div class="modal" id="libraryModal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <span class="modal-title">📚 Plant Encyclopedia</span>
+            <button class="close-btn" onclick="closeModal('libraryModal')">✖</button>
+        </div>
+        <div style="padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 10px; margin-bottom: 15px;">
+            <input type="text" id="plantSearch" placeholder="Search plants..." 
+                   style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #22c55e; 
+                          border-radius: 8px; color: #e0f2e9; font-size: 14px;"
+                   oninput="filterPlants()">
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px;">
+                <span>Total: <span style="color: #4ade80;">369 plants</span></span>
+                <span>Discovered: <span id="discoveredCount" style="color: #fbbf24;">0</span></span>
+                <span>Completion: <span id="completionPercent" style="color: #a855f7;">0%</span></span>
+            </div>
+        </div>
+        <div id="libraryContent" style="max-height: 500px; overflow-y: auto;"></div>
+    </div>
+</div>
+`;
+document.body.insertAdjacentHTML('beforeend', libraryModalHTML);
 </body>
 </html>
