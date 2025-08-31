@@ -47,3 +47,30 @@
 - Automatic companion bonus calculation
 - Saves/loads companion data
 - Dynamic recalculation when plants change
+
+## Version 1.3.0 - 55 Plant Database Expansion
+### Added Plants (55 total)
+**Vegetables (20)**: Tomato, Carrot, Lettuce, Potato, Corn, Beans, Pepper, Onion, Garlic, Broccoli, Cucumber, Eggplant, Radish, Spinach, Peas, Squash, Pumpkin, Beet, Cabbage, Leek
+
+**Herbs (15)**: Basil, Mint, Rosemary, Oregano, Thyme, Parsley, Sage, Cilantro, Dill, Chamomile, Lavender, Fennel, Chives, Tarragon, Horseradish
+
+**Flowers (10)**: Sunflower, Marigold, Rose, Tulip, Nasturtium, Zinnia, Cosmos, Dahlia, Petunia, Lily
+
+**Grains (5)**: Wheat, Rice, Oats, Barley, Quinoa
+
+**Fruits/Trees (5)**: Apple, Strawberry, Blueberry, Grape, Lemon
+
+### Features
+- Realistic companion/antagonist relationships for all plants
+- Three Sisters planting pattern (Corn + Beans + Squash)
+- Category filters in marketplace
+- Organized market display by plant type
+- Better starter pack (5 types, 3 seeds each)
+- Increased starting coins to 150
+- Compact companion info display
+
+### Gameplay Impact
+- Much more variety and replayability
+- Complex companion strategies possible
+- Educational value increased significantly
+- Real permaculture principles applied
