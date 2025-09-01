@@ -1,1 +1,1 @@
-[Copy the content from the artifact above]
+const MEDICINAL_PLANTS = {};
