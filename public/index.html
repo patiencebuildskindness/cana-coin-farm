@@ -2070,6 +2070,15 @@
             }, 5000);
         };
     </script>
+<script src="medicinal_plants.js"></script>
+<script>
+setTimeout(function() {
+    if (typeof MEDICINAL_PLANTS_DB !== "undefined" && typeof PLANTS !== "undefined") {
+        Object.assign(PLANTS, MEDICINAL_PLANTS_DB);
+        console.log("Added medicinal plants!");
+    }
+}, 100);
+</script>
 </body>
 </html>
 <script src="medicinal_plants_complete.js"></script>
