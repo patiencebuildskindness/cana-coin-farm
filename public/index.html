@@ -226,7 +226,7 @@
             <h1>🌱 CANA Coin Farm 🌱</h1>
             <div style="text-align: center; color: #666; margin-bottom: 10px;">55 Plant Varieties with Companion Planting!</div>
             <div id="gameStats">
-                <div class="stat">Day: <span id="day">1</span></div>
+                <div class="stat">Weather: <span id="weather">☀️</span></div><div class="stat">Day: <span id="day">1</span></div>
                 <div class="stat">Season: <span id="season">Spring</span></div>
                 <div class="stat">Coins: <span id="coins">150</span></div>
                 <div class="stat">Energy: <span id="energy">100</span>/100</div>
@@ -1551,6 +1551,11 @@
             }
 
             advanceDay() {
+            // Check weather
+            if (weather.checkWeather()) {
+                this.plots.forEach(plot => plot.watered = true);
+                this.showTooltip('🌧️ It rained! All plants were watered!');
+            }
                 this.day++;
                 
                 // Season change
@@ -2051,6 +2056,7 @@
 
         // Start the game
         let game;
+        let weather = new WeatherSystem();
         window.onload = () => {
             game = new FarmGame();
             game.updateUI();
