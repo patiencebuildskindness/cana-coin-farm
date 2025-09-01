@@ -2079,6 +2079,18 @@ setTimeout(function() {
     }
 }, 100);
 </script>
+<script src="all_plants_database.js"></script>
+<script>
+setTimeout(function() {
+    if (typeof ALL_MEDICINAL_PLANTS !== "undefined" && typeof PLANTS !== "undefined") {
+        Object.assign(PLANTS, ALL_MEDICINAL_PLANTS);
+        console.log("Added " + Object.keys(ALL_MEDICINAL_PLANTS).length + " medicinal plants!");
+        if (typeof game !== "undefined" && game.updateUI) {
+            game.updateUI();
+        }
+    }
+}, 500);
+</script>
 </body>
 </html>
 <script src="medicinal_plants_complete.js"></script>
