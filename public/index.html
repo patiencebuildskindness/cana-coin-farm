@@ -3,53 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CANA Coin Farm - MVP</title>
+    <title>CANA Coin Farm - 369 Plants Edition</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
             padding: 20px;
         }
-
         #gameContainer {
-            background: rgba(255, 255, 255, 0.95);
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 1200px;
-            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-
         #gameHeader {
             text-align: center;
             margin-bottom: 20px;
             padding-bottom: 20px;
             border-bottom: 2px solid #e0e0e0;
         }
-
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
+        h1 { color: #333; margin-bottom: 10px; }
         #gameStats {
             display: flex;
             justify-content: space-around;
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
-
         .stat {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
@@ -58,80 +40,34 @@
             margin: 5px;
             font-weight: bold;
         }
-
-        #gameArea {
-            display: flex;
+        #mainGame {
+            display: grid;
+            grid-template-columns: 600px 1fr;
             gap: 20px;
-            flex-wrap: wrap;
         }
-
         #farmCanvas {
             border: 3px solid #333;
             border-radius: 10px;
             background: #8bc34a;
-            cursor: crosshair;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
+            width: 600px;
+            height: 600px;
         }
-
-        #controls {
-            flex: 1;
-            min-width: 250px;
+        #sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-
-        .controlSection {
+        .panel {
             background: #f5f5f5;
             padding: 15px;
             border-radius: 10px;
-            margin-bottom: 15px;
         }
-
-        .controlSection h3 {
-            color: #333;
+        .panel h3 {
             margin-bottom: 10px;
+            color: #333;
             border-bottom: 2px solid #667eea;
             padding-bottom: 5px;
         }
-
-        #inventory {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .inventoryItem {
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 5px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.9em;
-        }
-
-        .inventoryItem:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .inventoryItem.selected {
-            border-color: #667eea;
-            background: #e8eaf6;
-            transform: scale(1.05);
-        }
-
-        .inventoryItem .emoji {
-            font-size: 1.5em;
-            display: block;
-        }
-
-        .inventoryItem .count {
-            font-size: 0.8em;
-            color: #666;
-        }
-
         button {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
@@ -139,1949 +75,258 @@
             padding: 10px 20px;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
             margin: 5px;
-            transition: transform 0.2s;
+            font-weight: bold;
         }
-
-        button:hover:not(:disabled) {
-            transform: scale(1.05);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        #actionButtons {
-            display: flex;
-            flex-wrap: wrap;
+        button:hover { transform: scale(1.05); }
+        #plantList {
+            max-height: 300px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-top: 10px;
         }
-
-        #tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9em;
-            pointer-events: none;
-            z-index: 1000;
-            display: none;
-        }
-
-        .plotInfo {
-            margin-top: 10px;
-            padding: 10px;
+        .plantItem {
             background: white;
-            border-radius: 5px;
-            font-size: 0.9em;
-        }
-
-        #instructions {
-            background: #fffde7;
+            border: 2px solid #ddd;
+            border-radius: 8px;
             padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            border-left: 4px solid #ffc107;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
         }
-
-        #instructions h4 {
-            color: #f57c00;
-            margin-bottom: 5px;
+        .plantItem:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
-
-        #instructions ul {
-            margin-left: 20px;
-            color: #666;
+        .plantItem.selected {
+            border-color: #667eea;
+            background: #e8eaf6;
         }
-
-        .save-indicator {
+        #marketPanel {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+        }
+        #statusMessage {
             position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(76, 175, 80, 0.9);
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
             color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
+            padding: 15px 25px;
+            border-radius: 10px;
             display: none;
-            animation: fadeInOut 2s ease;
-            z-index: 2000;
-        }
-
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(-10px); }
-            20% { opacity: 1; transform: translateY(0); }
-            80% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-10px); }
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
         <div id="gameHeader">
-            <h1>🌱 CANA Coin Farm 🌱</h1>
-            <div style="text-align: center; color: #666; margin-bottom: 10px;">55 Plant Varieties with Companion Planting!</div>
+            <h1>🌱 CANA Coin Farm - 369 Plants Edition 🌱</h1>
             <div id="gameStats">
-                <div class="stat">Weather: <span id="weather">☀️</span></div><div class="stat">Day: <span id="day">1</span></div>
+                <div class="stat">Day: <span id="day">1</span></div>
                 <div class="stat">Season: <span id="season">Spring</span></div>
-                <div class="stat">Coins: <span id="coins">150</span></div>
-                <div class="stat">Energy: <span id="energy">100</span>/100</div>
+                <div class="stat">Coins: <span id="coins">200</span></div>
+                <div class="stat">CANA: <span id="cana">0</span></div>
+                <div class="stat">Plants DB: <span id="plantCount">369</span></div>
+                <div class="stat">Players Online: <span id="playersOnline">1</span></div>
             </div>
         </div>
 
-        <div id="instructions">
-            <h4>🎮 How to Play:</h4>
-            <ul>
-                <li>Use Arrow Keys or WASD to move your character</li>
-                <li>Click on plots to interact</li>
-                <li>Select seeds from inventory to plant</li>
-                <li>Water plants daily for growth</li>
-                <li>Harvest when ready!</li>
-                <li><strong>💚 Plant companions together for growth bonuses!</strong></li>
-                <li><strong>⚠️ Avoid planting antagonists near each other</strong></li>
-            </ul>
-        </div>
-
-        <div id="gameArea">
-            <canvas id="farmCanvas" width="500" height="500"></canvas>
+        <div id="mainGame">
+            <canvas id="farmCanvas"></canvas>
             
-            <div id="controls">
-                <div class="controlSection">
-                    <h3>🎒 Inventory</h3>
-                    <div id="inventory"></div>
+            <div id="sidebar">
+                <div class="panel">
+                    <h3>🌿 Plant Database (369 Plants)</h3>
+                    <div id="plantList"></div>
+                    <div style="margin-top: 10px;">
+                        Selected: <span id="selectedPlant">None</span>
+                    </div>
                 </div>
-
-                <div class="controlSection">
+                
+                <div class="panel" id="marketPanel">
+                    <h3>🏪 P2P Marketplace</h3>
+                    <button onclick="openMarketplace()">View Listings</button>
+                    <button onclick="createListing()">Sell Items</button>
+                    <div id="marketStats">
+                        Active Trades: <span id="activeTrades">0</span>
+                    </div>
+                </div>
+                
+                <div class="panel">
                     <h3>⚡ Actions</h3>
-                    <div id="actionButtons">
-                        <button onclick="game.waterPlot()">💧 Water</button>
-                        <button onclick="game.harvestPlot()">🌾 Harvest</button>
-                        <button onclick="game.tillSoil()">🔨 Till Soil</button>
-                        <button onclick="game.expandLand()" id="expandBtn">🏗️ Expand (500 coins)</button>
-                    </div>
-                </div>
-
-                <div class="controlSection">
-                    <h3>📊 Plot Info</h3>
-                    <div class="plotInfo" id="plotInfo">
-                        Select a plot to see details
-                    </div>
-                </div>
-
-                <div class="controlSection">
-                    <h3>🏪 Market</h3>
-                    <button onclick="game.openMarket()">Open Market</button>
-                    <button onclick="game.advanceDay()">🌙 Sleep (Next Day)</button>
-                </div>
-
-                <div class="controlSection">
-                    <h3>💾 Save Management</h3>
-                    <div style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-                        Auto-save: ON (every 30s)<br>
-                        Last save: <span id="lastSave">Never</span>
-                    </div>
-                    <button onclick="game.saveGame() && game.showTooltip('Game saved!')">💾 Save Now</button>
-                    <button onclick="game.exportSave()">📥 Export Save</button>
-                    <button onclick="document.getElementById('importFile').click()">📤 Import Save</button>
-                    <input type="file" id="importFile" style="display: none;" accept=".json" onchange="game.importSave(this.files[0])">
-                    <button onclick="game.deleteSave()" style="background: linear-gradient(135deg, #e53935, #c62828);">🗑️ Delete Save</button>
+                    <button onclick="plantSelected()">Plant</button>
+                    <button onclick="waterPlot()">Water</button>
+                    <button onclick="harvestPlot()">Harvest</button>
+                    <button onclick="saveGame()">💾 Save</button>
+                    <button onclick="nextDay()">🌙 Next Day</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="tooltip"></div>
-    <div class="save-indicator" id="saveIndicator">🔄 Saving...</div>
+    <div id="statusMessage"></div>
 
+    <!-- Load all game modules -->
+    <script src="plant_database.js"></script>
+    <script src="marketplace.js"></script>
+    <script src="game_state.js"></script>
+    
     <script>
-        // Game Constants
+        // Main game initialization
+        let selectedPlantKey = null;
+        let currentX = 0;
+        let currentY = 0;
+        
+        // Canvas setup
+        const canvas = document.getElementById('farmCanvas');
+        const ctx = canvas.getContext('2d');
+        const GRID_SIZE = 12;
         const TILE_SIZE = 50;
-        const INITIAL_GRID_SIZE = 10;
-        const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter'];
-        const DAYS_PER_SEASON = 30;
-
-        // Plant Database (Expanded to 50+ from the 369)
-        const PLANTS = {
-            // VEGETABLES (20)
-            tomato: {
-                name: 'Tomato',
-                emoji: '🍅',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🍅'],
-                basePrice: 15,
-                seedCost: 5,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 3,
-                category: 'vegetable',
-                companions: ['basil', 'marigold', 'carrot', 'parsley', 'nasturtium'],
-                antagonists: ['broccoli', 'fennel', 'potato']
-            },
-            carrot: {
-                name: 'Carrot',
-                emoji: '🥕',
-                growthTime: 4,
-                stages: ['🌱', '🌿', '🌿', '🥕'],
-                basePrice: 10,
-                seedCost: 3,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 2,
-                category: 'vegetable',
-                companions: ['tomato', 'lettuce', 'rosemary', 'onion', 'leek'],
-                antagonists: ['dill']
-            },
-            lettuce: {
-                name: 'Lettuce',
-                emoji: '🥬',
-                growthTime: 3,
-                stages: ['🌱', '🌿', '🥬'],
-                basePrice: 8,
-                seedCost: 2,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 4,
-                category: 'vegetable',
-                companions: ['carrot', 'radish', 'strawberry', 'onion'],
-                antagonists: []
-            },
-            potato: {
-                name: 'Potato',
-                emoji: '🥔',
-                growthTime: 6,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🥔'],
-                basePrice: 12,
-                seedCost: 4,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'vegetable',
-                companions: ['beans', 'corn', 'horseradish', 'marigold'],
-                antagonists: ['tomato', 'cucumber', 'pumpkin', 'sunflower']
-            },
-            corn: {
-                name: 'Corn',
-                emoji: '🌽',
-                growthTime: 7,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌽'],
-                basePrice: 18,
-                seedCost: 6,
-                season: ['Summer'],
-                waterNeeded: 3,
-                category: 'vegetable',
-                companions: ['beans', 'squash', 'pumpkin', 'cucumber'],  // Three Sisters pattern
-                antagonists: ['tomato']
-            },
-            beans: {
-                name: 'Green Beans',
-                emoji: '🫘',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🫘'],
-                basePrice: 14,
-                seedCost: 4,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'vegetable',
-                companions: ['corn', 'squash', 'potato', 'cucumber', 'strawberry'],  // Three Sisters
-                antagonists: ['onion', 'garlic', 'fennel']
-            },
-            pepper: {
-                name: 'Bell Pepper',
-                emoji: '🫑',
-                growthTime: 6,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🫑'],
-                basePrice: 16,
-                seedCost: 5,
-                season: ['Summer'],
-                waterNeeded: 3,
-                category: 'vegetable',
-                companions: ['basil', 'tomato', 'carrot', 'onion'],
-                antagonists: ['fennel', 'beans']
-            },
-            onion: {
-                name: 'Onion',
-                emoji: '🧅',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🧅'],
-                basePrice: 11,
-                seedCost: 3,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 2,
-                category: 'vegetable',
-                companions: ['carrot', 'lettuce', 'beet', 'chamomile'],
-                antagonists: ['beans', 'peas']
-            },
-            garlic: {
-                name: 'Garlic',
-                emoji: '🧄',
-                growthTime: 8,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🧄'],
-                basePrice: 20,
-                seedCost: 6,
-                season: ['Fall'],
-                waterNeeded: 1,
-                category: 'vegetable',
-                companions: ['tomato', 'rose', 'beet', 'lettuce'],
-                antagonists: ['beans', 'peas', 'sage']
-            },
-            broccoli: {
-                name: 'Broccoli',
-                emoji: '🥦',
-                growthTime: 6,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🥦'],
-                basePrice: 17,
-                seedCost: 5,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 3,
-                category: 'vegetable',
-                companions: ['onion', 'beet', 'chamomile', 'dill'],
-                antagonists: ['tomato', 'strawberry']
-            },
-            cucumber: {
-                name: 'Cucumber',
-                emoji: '🥒',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🥒'],
-                basePrice: 13,
-                seedCost: 4,
-                season: ['Summer'],
-                waterNeeded: 4,
-                category: 'vegetable',
-                companions: ['corn', 'beans', 'radish', 'sunflower'],
-                antagonists: ['potato', 'sage']
-            },
-            eggplant: {
-                name: 'Eggplant',
-                emoji: '🍆',
-                growthTime: 7,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🍆'],
-                basePrice: 19,
-                seedCost: 6,
-                season: ['Summer'],
-                waterNeeded: 3,
-                category: 'vegetable',
-                companions: ['pepper', 'tomato', 'beans'],
-                antagonists: []
-            },
-            radish: {
-                name: 'Radish',
-                emoji: '🌰',
-                growthTime: 2,
-                stages: ['🌱', '🌰'],
-                basePrice: 6,
-                seedCost: 2,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 2,
-                category: 'vegetable',
-                companions: ['lettuce', 'peas', 'cucumber', 'spinach'],
-                antagonists: ['hyssop']
-            },
-            spinach: {
-                name: 'Spinach',
-                emoji: '🥬',
-                growthTime: 3,
-                stages: ['🌱', '🌿', '🥬'],
-                basePrice: 9,
-                seedCost: 3,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 3,
-                category: 'vegetable',
-                companions: ['strawberry', 'beans', 'peas', 'radish'],
-                antagonists: []
-            },
-            peas: {
-                name: 'Peas',
-                emoji: '🟢',
-                growthTime: 4,
-                stages: ['🌱', '🌿', '🌿', '🟢'],
-                basePrice: 12,
-                seedCost: 4,
-                season: ['Spring'],
-                waterNeeded: 2,
-                category: 'vegetable',
-                companions: ['carrot', 'radish', 'cucumber', 'corn'],
-                antagonists: ['onion', 'garlic']
-            },
-            squash: {
-                name: 'Squash',
-                emoji: '🎃',
-                growthTime: 8,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🎃'],
-                basePrice: 22,
-                seedCost: 7,
-                season: ['Summer'],
-                waterNeeded: 3,
-                category: 'vegetable',
-                companions: ['corn', 'beans', 'nasturtium', 'radish'],  // Three Sisters
-                antagonists: ['potato']
-            },
-            pumpkin: {
-                name: 'Pumpkin',
-                emoji: '🎃',
-                growthTime: 9,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🎃'],
-                basePrice: 25,
-                seedCost: 8,
-                season: ['Summer'],
-                waterNeeded: 3,
-                category: 'vegetable',
-                companions: ['corn', 'marigold', 'nasturtium'],
-                antagonists: ['potato']
-            },
-            beet: {
-                name: 'Beet',
-                emoji: '🟣',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🟣'],
-                basePrice: 11,
-                seedCost: 3,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 2,
-                category: 'vegetable',
-                companions: ['onion', 'garlic', 'lettuce', 'cabbage'],
-                antagonists: ['beans']
-            },
-            cabbage: {
-                name: 'Cabbage',
-                emoji: '🥬',
-                growthTime: 6,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🥬'],
-                basePrice: 14,
-                seedCost: 4,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 3,
-                category: 'vegetable',
-                companions: ['dill', 'onion', 'potato', 'chamomile', 'beet'],
-                antagonists: ['strawberry', 'tomato', 'pepper']
-            },
-            leek: {
-                name: 'Leek',
-                emoji: '🥬',
-                growthTime: 7,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🥬'],
-                basePrice: 16,
-                seedCost: 5,
-                season: ['Fall'],
-                waterNeeded: 2,
-                category: 'vegetable',
-                companions: ['carrot', 'onion', 'beet'],
-                antagonists: ['beans', 'peas']
-            },
-
-            // HERBS (15)
-            basil: {
-                name: 'Basil',
-                emoji: '🌿',
-                growthTime: 3,
-                stages: ['🌱', '🌿', '🌿'],
-                basePrice: 12,
-                seedCost: 4,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'herb',
-                companions: ['tomato', 'pepper', 'oregano', 'lettuce'],
-                antagonists: ['sage']
-            },
-            mint: {
-                name: 'Mint',
-                emoji: '🌿',
-                growthTime: 3,
-                stages: ['🌱', '🌿', '🌿'],
-                basePrice: 10,
-                seedCost: 3,
-                season: ['Spring', 'Summer', 'Fall'],
-                waterNeeded: 3,
-                category: 'herb',
-                companions: ['cabbage', 'tomato', 'peas'],
-                antagonists: ['parsley']
-            },
-            rosemary: {
-                name: 'Rosemary',
-                emoji: '🌿',
-                growthTime: 6,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿'],
-                basePrice: 18,
-                seedCost: 6,
-                season: ['Spring', 'Summer', 'Fall'],
-                waterNeeded: 1,
-                category: 'herb',
-                companions: ['cabbage', 'beans', 'carrot', 'sage'],
-                antagonists: []
-            },
-            oregano: {
-                name: 'Oregano',
-                emoji: '🌿',
-                growthTime: 4,
-                stages: ['🌱', '🌿', '🌿', '🌿'],
-                basePrice: 14,
-                seedCost: 4,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 1,
-                category: 'herb',
-                companions: ['basil', 'tomato', 'pepper'],
-                antagonists: []
-            },
-            thyme: {
-                name: 'Thyme',
-                emoji: '🌿',
-                growthTime: 4,
-                stages: ['🌱', '🌿', '🌿', '🌿'],
-                basePrice: 13,
-                seedCost: 4,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 1,
-                category: 'herb',
-                companions: ['cabbage', 'potato', 'eggplant'],
-                antagonists: []
-            },
-            parsley: {
-                name: 'Parsley',
-                emoji: '🌿',
-                growthTime: 3,
-                stages: ['🌱', '🌿', '🌿'],
-                basePrice: 10,
-                seedCost: 3,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'herb',
-                companions: ['tomato', 'pepper', 'rose'],
-                antagonists: ['mint', 'lettuce']
-            },
-            sage: {
-                name: 'Sage',
-                emoji: '🌿',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿'],
-                basePrice: 15,
-                seedCost: 5,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 1,
-                category: 'herb',
-                companions: ['rosemary', 'cabbage', 'carrot'],
-                antagonists: ['cucumber', 'basil']
-            },
-            cilantro: {
-                name: 'Cilantro',
-                emoji: '🌿',
-                growthTime: 3,
-                stages: ['🌱', '🌿', '🌿'],
-                basePrice: 11,
-                seedCost: 3,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 2,
-                category: 'herb',
-                companions: ['spinach', 'tomato'],
-                antagonists: ['fennel']
-            },
-            dill: {
-                name: 'Dill',
-                emoji: '🌿',
-                growthTime: 4,
-                stages: ['🌱', '🌿', '🌿', '🌿'],
-                basePrice: 12,
-                seedCost: 4,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'herb',
-                companions: ['cabbage', 'lettuce', 'onion'],
-                antagonists: ['carrot', 'tomato']
-            },
-            chamomile: {
-                name: 'Chamomile',
-                emoji: '🌼',
-                growthTime: 4,
-                stages: ['🌱', '🌿', '🌿', '🌼'],
-                basePrice: 16,
-                seedCost: 5,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'herb',
-                companions: ['cabbage', 'onion', 'cucumber'],
-                antagonists: []
-            },
-            lavender: {
-                name: 'Lavender',
-                emoji: '💜',
-                growthTime: 7,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '💜'],
-                basePrice: 22,
-                seedCost: 8,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 1,
-                category: 'herb',
-                companions: ['rose', 'cabbage'],
-                antagonists: []
-            },
-            fennel: {
-                name: 'Fennel',
-                emoji: '🌿',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿'],
-                basePrice: 14,
-                seedCost: 5,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'herb',
-                companions: [],
-                antagonists: ['tomato', 'beans', 'pepper', 'cilantro']  // Fennel is antagonistic to many
-            },
-            chives: {
-                name: 'Chives',
-                emoji: '🌿',
-                growthTime: 3,
-                stages: ['🌱', '🌿', '🌿'],
-                basePrice: 9,
-                seedCost: 3,
-                season: ['Spring', 'Summer', 'Fall'],
-                waterNeeded: 2,
-                category: 'herb',
-                companions: ['carrot', 'tomato', 'rose'],
-                antagonists: ['beans', 'peas']
-            },
-            tarragon: {
-                name: 'Tarragon',
-                emoji: '🌿',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿'],
-                basePrice: 17,
-                seedCost: 6,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'herb',
-                companions: ['pepper', 'eggplant'],
-                antagonists: []
-            },
-            horseradish: {
-                name: 'Horseradish',
-                emoji: '🌿',
-                growthTime: 8,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿'],
-                basePrice: 20,
-                seedCost: 7,
-                season: ['Spring'],
-                waterNeeded: 2,
-                category: 'herb',
-                companions: ['potato', 'apple'],
-                antagonists: []
-            },
-
-            // FLOWERS (10)
-            sunflower: {
-                name: 'Sunflower',
-                emoji: '🌻',
-                growthTime: 7,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌻'],
-                basePrice: 20,
-                seedCost: 8,
-                season: ['Summer'],
-                waterNeeded: 3,
-                category: 'flower',
-                companions: ['cucumber', 'corn'],
-                antagonists: ['potato']
-            },
-            marigold: {
-                name: 'Marigold',
-                emoji: '🏵️',
-                growthTime: 4,
-                stages: ['🌱', '🌿', '🌿', '🏵️'],
-                basePrice: 12,
-                seedCost: 4,
-                season: ['Spring', 'Summer', 'Fall'],
-                waterNeeded: 2,
-                category: 'flower',
-                companions: ['tomato', 'potato', 'pepper', 'eggplant', 'cabbage'],  // Pest deterrent
-                antagonists: []
-            },
-            rose: {
-                name: 'Rose',
-                emoji: '🌹',
-                growthTime: 10,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌹'],
-                basePrice: 30,
-                seedCost: 12,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 3,
-                category: 'flower',
-                perennial: true,
-                companions: ['garlic', 'parsley', 'chives'],
-                antagonists: []
-            },
-            tulip: {
-                name: 'Tulip',
-                emoji: '🌷',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌷'],
-                basePrice: 18,
-                seedCost: 7,
-                season: ['Spring'],
-                waterNeeded: 2,
-                category: 'flower',
-                companions: [],
-                antagonists: []
-            },
-            nasturtium: {
-                name: 'Nasturtium',
-                emoji: '🌺',
-                growthTime: 3,
-                stages: ['🌱', '🌿', '🌺'],
-                basePrice: 10,
-                seedCost: 3,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'flower',
-                companions: ['cucumber', 'tomato', 'cabbage', 'radish'],
-                antagonists: []
-            },
-            zinnia: {
-                name: 'Zinnia',
-                emoji: '🌸',
-                growthTime: 4,
-                stages: ['🌱', '🌿', '🌿', '🌸'],
-                basePrice: 11,
-                seedCost: 4,
-                season: ['Summer'],
-                waterNeeded: 2,
-                category: 'flower',
-                companions: ['tomato', 'beans'],
-                antagonists: []
-            },
-            cosmos: {
-                name: 'Cosmos',
-                emoji: '🌼',
-                growthTime: 4,
-                stages: ['🌱', '🌿', '🌿', '🌼'],
-                basePrice: 10,
-                seedCost: 3,
-                season: ['Summer', 'Fall'],
-                waterNeeded: 1,
-                category: 'flower',
-                companions: ['tomato', 'beet'],
-                antagonists: []
-            },
-            dahlia: {
-                name: 'Dahlia',
-                emoji: '🌺',
-                growthTime: 6,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌺'],
-                basePrice: 16,
-                seedCost: 6,
-                season: ['Summer'],
-                waterNeeded: 3,
-                category: 'flower',
-                companions: [],
-                antagonists: []
-            },
-            petunia: {
-                name: 'Petunia',
-                emoji: '🌸',
-                growthTime: 3,
-                stages: ['🌱', '🌿', '🌸'],
-                basePrice: 9,
-                seedCost: 3,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 2,
-                category: 'flower',
-                companions: ['beans', 'tomato'],
-                antagonists: []
-            },
-            lily: {
-                name: 'Lily',
-                emoji: '⚜️',
-                growthTime: 8,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '⚜️'],
-                basePrice: 25,
-                seedCost: 10,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 3,
-                category: 'flower',
-                perennial: true,
-                companions: [],
-                antagonists: []
-            },
-
-            // GRAINS (5)
-            wheat: {
-                name: 'Wheat',
-                emoji: '🌾',
-                growthTime: 8,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌾'],
-                basePrice: 25,
-                seedCost: 10,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 2,
-                category: 'grain',
-                companions: ['corn', 'beans'],
-                antagonists: []
-            },
-            rice: {
-                name: 'Rice',
-                emoji: '🌾',
-                growthTime: 10,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌾'],
-                basePrice: 28,
-                seedCost: 12,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 5,  // Needs lots of water
-                category: 'grain',
-                companions: [],
-                antagonists: []
-            },
-            oats: {
-                name: 'Oats',
-                emoji: '🌾',
-                growthTime: 7,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌾'],
-                basePrice: 22,
-                seedCost: 9,
-                season: ['Spring'],
-                waterNeeded: 2,
-                category: 'grain',
-                companions: ['beans', 'peas'],
-                antagonists: []
-            },
-            barley: {
-                name: 'Barley',
-                emoji: '🌾',
-                growthTime: 7,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌾'],
-                basePrice: 23,
-                seedCost: 9,
-                season: ['Spring', 'Fall'],
-                waterNeeded: 2,
-                category: 'grain',
-                companions: [],
-                antagonists: []
-            },
-            quinoa: {
-                name: 'Quinoa',
-                emoji: '🌾',
-                growthTime: 9,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌿', '🌾'],
-                basePrice: 30,
-                seedCost: 12,
-                season: ['Summer'],
-                waterNeeded: 2,
-                category: 'grain',
-                companions: ['beans', 'corn'],
-                antagonists: []
-            },
-
-            // FRUITS/TREES (5)
-            apple: {
-                name: 'Apple Tree',
-                emoji: '🍎',
-                growthTime: 20,
-                stages: ['🌱', '🌿', '🌳', '🌳', '🌳', '🍎'],
-                basePrice: 50,
-                seedCost: 20,
-                season: ['Spring'],
-                waterNeeded: 3,
-                category: 'tree',
-                perennial: true,
-                companions: ['chives', 'nasturtium', 'garlic'],
-                antagonists: []
-            },
-            strawberry: {
-                name: 'Strawberry',
-                emoji: '🍓',
-                growthTime: 5,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🍓'],
-                basePrice: 20,
-                seedCost: 8,
-                season: ['Spring', 'Summer'],
-                waterNeeded: 3,
-                category: 'fruit',
-                perennial: true,
-                companions: ['beans', 'lettuce', 'spinach', 'thyme'],
-                antagonists: ['cabbage', 'broccoli']
-            },
-            blueberry: {
-                name: 'Blueberry',
-                emoji: '🫐',
-                growthTime: 15,
-                stages: ['🌱', '🌿', '🌿', '🌳', '🌳', '🫐'],
-                basePrice: 35,
-                seedCost: 15,
-                season: ['Spring'],
-                waterNeeded: 3,
-                category: 'fruit',
-                perennial: true,
-                companions: ['strawberry', 'thyme'],
-                antagonists: []
-            },
-            grape: {
-                name: 'Grape Vine',
-                emoji: '🍇',
-                growthTime: 18,
-                stages: ['🌱', '🌿', '🌿', '🌿', '🍃', '🍇'],
-                basePrice: 40,
-                seedCost: 18,
-                season: ['Spring'],
-                waterNeeded: 2,
-                category: 'fruit',
-                perennial: true,
-                companions: ['basil', 'beans', 'peas'],
-                antagonists: ['cabbage', 'radish']
-            },
-            lemon: {
-                name: 'Lemon Tree',
-                emoji: '🍋',
-                growthTime: 25,
-                stages: ['🌱', '🌿', '🌳', '🌳', '🌳', '🍋'],
-                basePrice: 60,
-                seedCost: 25,
-                season: ['Spring'],
-                waterNeeded: 2,
-                category: 'tree',
-                perennial: true,
-                companions: ['thyme', 'rosemary'],
-                antagonists: []
-            }
-        };
-
-        // Character Class
-        class Character {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.energy = 100;
-                this.sprite = '👨‍🌾';
-                this.facing = 'down';
-                this.animationFrame = 0;
-            }
-
-            move(dx, dy, gridSize) {
-                const newX = this.x + dx;
-                const newY = this.y + dy;
-                
-                if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize) {
-                    if (this.energy > 0) {
-                        this.x = newX;
-                        this.y = newY;
-                        this.energy = Math.max(0, this.energy - 1);
-                        this.animationFrame = (this.animationFrame + 1) % 2;
-                        
-                        // Update facing direction
-                        if (dx > 0) this.facing = 'right';
-                        else if (dx < 0) this.facing = 'left';
-                        else if (dy > 0) this.facing = 'down';
-                        else if (dy < 0) this.facing = 'up';
-                    }
-                }
-            }
-
-            rest() {
-                this.energy = 100;
-            }
-
-            draw(ctx, tileSize) {
-                ctx.save();
-                ctx.font = `${tileSize * 0.7}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                
-                // Add simple animation
-                const offset = this.animationFrame * 2;
-                const x = this.x * tileSize + tileSize / 2;
-                const y = this.y * tileSize + tileSize / 2 + offset;
-                
-                // Draw shadow
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fillText(this.sprite, x + 2, y + 2);
-                
-                // Draw character
-                ctx.fillStyle = '#000';
-                ctx.fillText(this.sprite, x, y);
-                
-                ctx.restore();
-            }
-        }
-
-        // Plot Class
-        class Plot {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.tilled = false;
-                this.plant = null;
-                this.growthStage = 0;
-                this.watered = false;
-                this.daysWithoutWater = 0;
-                this.health = 100;
-                this.harvestReady = false;
-                this.companionBonus = 0;  // Stores companion planting bonus
-                this.antagonistPenalty = 0;  // Stores antagonist penalty
-            }
-
-            till() {
-                this.tilled = true;
-                this.plant = null;
-                this.growthStage = 0;
-                this.harvestReady = false;
-                this.companionBonus = 0;
-                this.antagonistPenalty = 0;
-            }
-
-            plantSeed(plantType) {
-                if (this.tilled && !this.plant) {
-                    this.plant = plantType;
-                    this.growthStage = 0;
-                    this.health = 100;
-                    return true;
-                }
-                return false;
-            }
-
-            water() {
-                this.watered = true;
-                this.daysWithoutWater = 0;
-            }
-
-            grow() {
-                if (this.plant && !this.harvestReady) {
-                    const plantData = PLANTS[this.plant];
-                    
-                    if (this.watered) {
-                        // Apply companion bonus to growth speed
-                        let growthRate = 1 + (this.companionBonus * 0.2) - (this.antagonistPenalty * 0.15);
-                        growthRate = Math.max(0.5, growthRate);  // Minimum 50% speed
-                        
-                        this.growthStage += growthRate;
-                        
-                        if (this.growthStage >= plantData.growthTime) {
-                            this.harvestReady = true;
-                            this.growthStage = plantData.growthTime;  // Cap at max
-                        }
-                        
-                        // Companion plants improve health recovery
-                        if (this.companionBonus > 0 && this.health < 100) {
-                            this.health = Math.min(100, this.health + (5 * this.companionBonus));
-                        }
-                    } else {
-                        this.daysWithoutWater++;
-                        // Antagonists make plants more vulnerable
-                        const healthLoss = 10 + (this.antagonistPenalty * 5);
-                        this.health = Math.max(0, this.health - healthLoss);
-                        if (this.health === 0) {
-                            this.plant = null;  // Plant dies
-                            this.companionBonus = 0;
-                            this.antagonistPenalty = 0;
-                        }
-                    }
-                    
-                    this.watered = false;  // Reset for next day
-                }
-            }
-
-            harvest() {
-                if (this.harvestReady) {
-                    const harvested = this.plant;
-                    if (!PLANTS[this.plant].perennial) {
-                        this.plant = null;
-                        this.growthStage = 0;
-                        this.harvestReady = false;
-                        this.tilled = false;
-                        this.companionBonus = 0;
-                        this.antagonistPenalty = 0;
-                    } else {
-                        // Perennial plants keep producing
-                        this.growthStage = PLANTS[this.plant].growthTime - 1;
-                        this.harvestReady = false;
-                    }
-                    return harvested;
-                }
-                return null;
-            }
-
-            draw(ctx, tileSize) {
-                const x = this.x * tileSize;
-                const y = this.y * tileSize;
-                
-                // Base soil
-                if (this.tilled) {
-                    ctx.fillStyle = '#8B4513';
-                } else {
-                    ctx.fillStyle = '#90EE90';
-                }
-                ctx.fillRect(x, y, tileSize, tileSize);
-                
-                // Watered effect
-                if (this.watered) {
-                    ctx.fillStyle = 'rgba(0, 100, 200, 0.3)';
-                    ctx.fillRect(x, y, tileSize, tileSize);
-                }
-                
-                // Companion bonus indicator - green glow
-                if (this.companionBonus > 0) {
-                    ctx.fillStyle = `rgba(76, 175, 80, ${0.15 * this.companionBonus})`;
-                    ctx.fillRect(x, y, tileSize, tileSize);
-                }
-                
-                // Antagonist penalty indicator - red glow
-                if (this.antagonistPenalty > 0) {
-                    ctx.fillStyle = `rgba(244, 67, 54, ${0.15 * this.antagonistPenalty})`;
-                    ctx.fillRect(x, y, tileSize, tileSize);
-                }
-                
-                // Grid lines
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-                ctx.strokeRect(x, y, tileSize, tileSize);
-                
-                // Draw plant
-                if (this.plant) {
-                    const plantData = PLANTS[this.plant];
-                    ctx.save();
-                    ctx.font = `${tileSize * 0.6}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    
-                    const stage = Math.min(Math.floor(this.growthStage), plantData.stages.length - 1);
-                    const emoji = this.harvestReady ? plantData.emoji : plantData.stages[stage];
-                    
-                    // Health affects opacity
-                    ctx.globalAlpha = this.health / 100;
-                    ctx.fillText(emoji, x + tileSize / 2, y + tileSize / 2);
-                    
-                    // Show if harvest ready
-                    if (this.harvestReady) {
-                        ctx.fillStyle = 'gold';
-                        ctx.font = '12px Arial';
-                        ctx.fillText('✨', x + tileSize - 10, y + 10);
-                    }
-                    
-                    // Show companion bonus indicator
-                    if (this.companionBonus > 0) {
-                        ctx.fillStyle = 'lime';
-                        ctx.font = '10px Arial';
-                        ctx.globalAlpha = 1;
-                        ctx.fillText('💚', x + 5, y + 12);
-                    }
-                    
-                    // Show antagonist penalty indicator
-                    if (this.antagonistPenalty > 0) {
-                        ctx.fillStyle = 'red';
-                        ctx.font = '10px Arial';
-                        ctx.globalAlpha = 1;
-                        ctx.fillText('⚠️', x + 5, y + tileSize - 5);
-                    }
-                    
-                    ctx.restore();
-                }
-            }
-        }
-
-        // Main Game Class
-        class FarmGame {
-            constructor() {
-                this.canvas = document.getElementById('farmCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.gridSize = INITIAL_GRID_SIZE;
-                this.plots = [];
-                this.character = new Character(0, 0);
-                this.selectedItem = null;
-                this.coins = 150;  // Increased starting coins for more variety
-                this.day = 1;
-                this.season = 0;
-                
-                // Try to load saved game
-                if (!this.loadGame()) {
-                    // No save found, initialize new game
-                    this.inventory = this.initializeInventory();
-                    this.initializeGrid();
-                } else {
-                    // Game loaded successfully
-                    this.calculateCompanionBonuses();  // Recalculate after loading
-                    this.showTooltip('Game loaded successfully!');
-                }
-                
-                // Set up controls
-                this.setupControls();
-                
-                // Set up auto-save
-                this.setupAutoSave();
-                
-                // Start game loop
-                this.gameLoop();
-            }
-
-            initializeInventory() {
-                const inventory = {};
-                
-                // Categories with their plants
-                const categories = {
-                    vegetable: Object.keys(PLANTS).filter(p => PLANTS[p].category === 'vegetable'),
-                    herb: Object.keys(PLANTS).filter(p => PLANTS[p].category === 'herb'),
-                    flower: Object.keys(PLANTS).filter(p => PLANTS[p].category === 'flower'),
-                    grain: Object.keys(PLANTS).filter(p => PLANTS[p].category === 'grain'),
-                    fruit: Object.keys(PLANTS).filter(p => PLANTS[p].category === 'fruit')
-                };
-                
-                // Give player a balanced starter pack (5 types, 3 seeds each)
-                // 2 vegetables, 1 herb, 1 flower, 1 other
-                const starterPack = [];
-                
-                // Add 2 random vegetables
-                for (let i = 0; i < 2; i++) {
-                    const veg = categories.vegetable[Math.floor(Math.random() * categories.vegetable.length)];
-                    if (!starterPack.includes(veg)) starterPack.push(veg);
-                }
-                
-                // Add 1 random herb
-                const herb = categories.herb[Math.floor(Math.random() * categories.herb.length)];
-                starterPack.push(herb);
-                
-                // Add 1 random flower
-                const flower = categories.flower[Math.floor(Math.random() * categories.flower.length)];
-                starterPack.push(flower);
-                
-                // Add 1 random from any category
-                const allPlants = Object.keys(PLANTS);
-                let randomPlant;
-                do {
-                    randomPlant = allPlants[Math.floor(Math.random() * allPlants.length)];
-                } while (starterPack.includes(randomPlant));
-                starterPack.push(randomPlant);
-                
-                // Give 3 seeds of each starter plant
-                starterPack.forEach(plant => {
-                    inventory[plant] = 3;
-                });
-                
-                return inventory;
-            }
-
-            initializeGrid() {
-                this.plots = [];
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        this.plots.push(new Plot(x, y));
-                    }
-                }
-            }
-
-            getPlot(x, y) {
-                return this.plots.find(p => p.x === x && p.y === y);
-            }
-
-            getAdjacentPlots(plot) {
-                const adjacent = [];
-                const directions = [
-                    { x: 0, y: -1 },  // up
-                    { x: 1, y: 0 },   // right
-                    { x: 0, y: 1 },   // down
-                    { x: -1, y: 0 }   // left
-                ];
-                
-                directions.forEach(dir => {
-                    const adjPlot = this.getPlot(plot.x + dir.x, plot.y + dir.y);
-                    if (adjPlot) {
-                        adjacent.push(adjPlot);
-                    }
-                });
-                
-                return adjacent;
-            }
-
-            calculateCompanionBonuses() {
-                // Reset all bonuses first
-                this.plots.forEach(plot => {
-                    plot.companionBonus = 0;
-                    plot.antagonistPenalty = 0;
-                });
-                
-                // Calculate new bonuses
-                this.plots.forEach(plot => {
-                    if (!plot.plant) return;
-                    
-                    const plantData = PLANTS[plot.plant];
-                    const adjacentPlots = this.getAdjacentPlots(plot);
-                    
-                    adjacentPlots.forEach(adjPlot => {
-                        if (!adjPlot.plant) return;
-                        
-                        // Check for companions
-                        if (plantData.companions && plantData.companions.includes(adjPlot.plant)) {
-                            plot.companionBonus++;
-                        }
-                        
-                        // Check for antagonists
-                        if (plantData.antagonists && plantData.antagonists.includes(adjPlot.plant)) {
-                            plot.antagonistPenalty++;
-                        }
-                    });
-                });
-            }
-
-            setupControls() {
-                // Keyboard controls
-                document.addEventListener('keydown', (e) => {
-                    switch(e.key.toLowerCase()) {
-                        case 'arrowup':
-                        case 'w':
-                            this.character.move(0, -1, this.gridSize);
-                            break;
-                        case 'arrowdown':
-                        case 's':
-                            this.character.move(0, 1, this.gridSize);
-                            break;
-                        case 'arrowleft':
-                        case 'a':
-                            this.character.move(-1, 0, this.gridSize);
-                            break;
-                        case 'arrowright':
-                        case 'd':
-                            this.character.move(1, 0, this.gridSize);
-                            break;
-                        case ' ':
-                            this.interactWithCurrentPlot();
-                            break;
-                    }
-                    this.updateUI();
-                    this.draw();
-                });
-
-                // Mouse controls
-                this.canvas.addEventListener('click', (e) => {
-                    const rect = this.canvas.getBoundingClientRect();
-                    const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-                    const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
-                    
-                    if (x === this.character.x && y === this.character.y) {
-                        this.interactWithCurrentPlot();
-                    } else {
-                        // Move character to clicked position (pathfinding simplified)
-                        this.character.x = Math.min(Math.max(0, x), this.gridSize - 1);
-                        this.character.y = Math.min(Math.max(0, y), this.gridSize - 1);
-                        this.character.energy = Math.max(0, this.character.energy - 2);
-                    }
-                    
-                    this.updateUI();
-                    this.draw();
-                });
-            }
-
-            interactWithCurrentPlot() {
-                const plot = this.getPlot(this.character.x, this.character.y);
-                if (!plot) return;
-                
-                if (this.selectedItem && this.inventory[this.selectedItem] > 0) {
-                    if (plot.plantSeed(this.selectedItem)) {
-                        this.inventory[this.selectedItem]--;
-                        if (this.inventory[this.selectedItem] === 0) {
-                            delete this.inventory[this.selectedItem];
-                            this.selectedItem = null;
-                        }
-                        // Recalculate companion bonuses when a new plant is placed
-                        this.calculateCompanionBonuses();
-                    }
-                }
-                
-                this.updateUI();
-            }
-
-            tillSoil() {
-                const plot = this.getPlot(this.character.x, this.character.y);
-                if (plot && this.character.energy >= 5) {
-                    plot.till();
-                    this.character.energy -= 5;
-                    // Recalculate companion bonuses when a plot is tilled
-                    this.calculateCompanionBonuses();
-                    this.updateUI();
-                    this.draw();
-                }
-            }
-
-            waterPlot() {
-                const plot = this.getPlot(this.character.x, this.character.y);
-                if (plot && plot.plant && this.character.energy >= 2) {
-                    plot.water();
-                    this.character.energy -= 2;
-                    this.updateUI();
-                    this.draw();
-                }
-            }
-
-            harvestPlot() {
-                const plot = this.getPlot(this.character.x, this.character.y);
-                if (plot && plot.harvestReady) {
-                    const harvested = plot.harvest();
-                    if (harvested) {
-                        const plantData = PLANTS[harvested];
-                        const price = this.calculateMarketPrice(harvested, plot);
-                        this.coins += price;
-                        
-                        // Show bonus message if there was a companion bonus
-                        let message = `Harvested ${plantData.name} for ${price} coins!`;
-                        if (plot.companionBonus > 0) {
-                            message += ` (+${Math.round((plot.companionBonus * 15))}% companion bonus!)`;
-                        }
-                        this.showTooltip(message);
-                        
-                        // Recalculate companion bonuses after harvest
-                        this.calculateCompanionBonuses();
-                    }
-                    this.updateUI();
-                    this.draw();
-                }
-            }
-
-            calculateMarketPrice(plantType, plot) {
-                const plantData = PLANTS[plantType];
-                let price = plantData.basePrice;
-                
-                // Season bonus
-                if (plantData.season.includes(SEASONS[this.season])) {
-                    price *= 1.2;
-                }
-                
-                // Companion bonus - better quality = higher price
-                if (plot && plot.companionBonus > 0) {
-                    price *= (1 + plot.companionBonus * 0.15);  // 15% per companion
-                }
-                
-                // Antagonist penalty - lower quality = lower price
-                if (plot && plot.antagonistPenalty > 0) {
-                    price *= (1 - plot.antagonistPenalty * 0.1);  // 10% penalty per antagonist
-                }
-                
-                // Random market fluctuation
-                price *= (0.8 + Math.random() * 0.4);
-                
-                return Math.round(price);
-            }
-
-            advanceDay() {
-            // Check weather
-            if (weather.checkWeather()) {
-                this.plots.forEach(plot => plot.watered = true);
-                this.showTooltip('🌧️ It rained! All plants were watered!');
-            }
-                this.day++;
-                
-                // Season change
-                if (this.day % DAYS_PER_SEASON === 0) {
-                    this.season = (this.season + 1) % SEASONS.length;
-                }
-                
-                // Recalculate companion bonuses before growth
-                this.calculateCompanionBonuses();
-                
-                // Grow all plants
-                this.plots.forEach(plot => plot.grow());
-                
-                // Restore energy
-                this.character.rest();
-                
-                this.updateUI();
-                this.draw();
-            }
-
-            expandLand() {
-                if (this.coins >= 500 && this.gridSize < 15) {
-                    this.coins -= 500;
-                    this.gridSize += 2;
-                    
-                    // Add new plots
-                    for (let y = 0; y < this.gridSize; y++) {
-                        for (let x = 0; x < this.gridSize; x++) {
-                            if (x >= this.gridSize - 2 || y >= this.gridSize - 2) {
-                                if (!this.getPlot(x, y)) {
-                                    this.plots.push(new Plot(x, y));
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Resize canvas
-                    this.canvas.width = this.gridSize * TILE_SIZE;
-                    this.canvas.height = this.gridSize * TILE_SIZE;
-                    
-                    this.updateUI();
-                    this.draw();
-                }
-            }
-
-            openMarket() {
-                let marketHTML = '<h3>🏪 Market - 55 Plant Varieties!</h3>';
-                
-                // Category filter buttons
-                marketHTML += '<div style="margin-bottom: 10px;">';
-                marketHTML += '<button onclick="game.filterMarket(\'all\')" style="margin: 2px;">All</button>';
-                marketHTML += '<button onclick="game.filterMarket(\'vegetable\')" style="margin: 2px;">🥬 Vegetables</button>';
-                marketHTML += '<button onclick="game.filterMarket(\'herb\')" style="margin: 2px;">🌿 Herbs</button>';
-                marketHTML += '<button onclick="game.filterMarket(\'flower\')" style="margin: 2px;">🌸 Flowers</button>';
-                marketHTML += '<button onclick="game.filterMarket(\'grain\')" style="margin: 2px;">🌾 Grains</button>';
-                marketHTML += '<button onclick="game.filterMarket(\'fruit\')" style="margin: 2px;">🍓 Fruits</button>';
-                marketHTML += '<button onclick="game.filterMarket(\'tree\')" style="margin: 2px;">🌳 Trees</button>';
-                marketHTML += '</div>';
-                
-                marketHTML += '<div id="marketItems" style="max-height: 400px; overflow-y: auto;">';
-                
-                // Group plants by category
-                const categories = {};
-                Object.entries(PLANTS).forEach(([key, plant]) => {
-                    if (!categories[plant.category]) categories[plant.category] = [];
-                    categories[plant.category].push({ key, ...plant });
-                });
-                
-                // Display by category
-                Object.entries(categories).forEach(([category, plants]) => {
-                    marketHTML += `<h4 style="background: #f0f0f0; padding: 5px; margin-top: 10px;">${category.charAt(0).toUpperCase() + category.slice(1)}s</h4>`;
-                    
-                    plants.forEach(plant => {
-                        const canBuy = this.coins >= plant.seedCost;
-                        const inSeason = plant.season.includes(SEASONS[this.season]);
-                        
-                        let companionInfo = '';
-                        if (plant.companions && plant.companions.length > 0) {
-                            const companionEmojis = plant.companions.slice(0, 3).map(c => 
-                                PLANTS[c] ? PLANTS[c].emoji : '').filter(e => e).join(' ');
-                            if (companionEmojis) {
-                                companionInfo = `<br><small>💚 ${companionEmojis}</small>`;
-                            }
-                        }
-                        
-                        marketHTML += `
-                            <div class="market-item-${plant.category}" style="padding: 8px; border: 1px solid #ddd; margin: 3px; border-radius: 5px; ${!canBuy ? 'opacity: 0.5;' : ''}">
-                                <span style="font-size: 1.3em;">${plant.emoji}</span>
-                                <strong>${plant.name}</strong>
-                                <span style="color: #666;"> - ${plant.seedCost} coins</span>
-                                ${inSeason ? '<span style="color: green; font-size: 0.9em;">✓</span>' : '<span style="color: red; font-size: 0.9em;">✗</span>'}
-                                ${companionInfo}
-                                <button onclick="game.buySeeds('${plant.key}')" ${!canBuy ? 'disabled' : ''} style="float: right; padding: 2px 8px; font-size: 0.9em;">Buy</button>
-                            </div>
-                        `;
-                    });
-                });
-                
-                marketHTML += '</div>';
-                marketHTML += '<br><div style="padding: 10px; background: #e8f5e9; border-radius: 5px; font-size: 0.9em;">';
-                marketHTML += '<strong>💚 Tips:</strong> Companions boost growth +20% & value +15% | ';
-                marketHTML += '<strong>🌱 New:</strong> 55 plant varieties available! | ';
-                marketHTML += '<strong>🌟 Strategy:</strong> Try the "Three Sisters" - Corn, Beans & Squash together!';
-                marketHTML += '</div>';
-                
-                // Simple modal
-                const modal = document.createElement('div');
-                modal.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 1000; max-width: 600px; width: 90%;';
-                modal.innerHTML = marketHTML + '<button onclick="this.parentElement.remove()" style="margin-top: 10px;">Close</button>';
-                document.body.appendChild(modal);
-            }
-
-            filterMarket(category) {
-                const marketItems = document.getElementById('marketItems');
-                if (!marketItems) return;
-                
-                const allItems = marketItems.querySelectorAll('[class^="market-item-"]');
-                allItems.forEach(item => {
-                    if (category === 'all' || item.className.includes(`market-item-${category}`)) {
-                        item.style.display = 'block';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            }
-
-            buySeeds(plantType) {
-                const plant = PLANTS[plantType];
-                if (this.coins >= plant.seedCost) {
-                    this.coins -= plant.seedCost;
-                    this.inventory[plantType] = (this.inventory[plantType] || 0) + 3;
-                    this.updateUI();
-                    document.querySelector('div[style*="position: fixed"]')?.remove();
-                }
-            }
-
-            showTooltip(text) {
-                const tooltip = document.getElementById('tooltip');
-                tooltip.textContent = text;
-                tooltip.style.display = 'block';
-                tooltip.style.left = '50%';
-                tooltip.style.top = '50%';
-                tooltip.style.transform = 'translate(-50%, -50%)';
-                
-                setTimeout(() => {
-                    tooltip.style.display = 'none';
-                }, 2000);
-            }
-
-            updateUI() {
-                // Update stats
-                document.getElementById('day').textContent = this.day;
-                document.getElementById('season').textContent = SEASONS[this.season];
-                document.getElementById('coins').textContent = this.coins;
-                document.getElementById('energy').textContent = this.character.energy;
-                
-                // Update last save time
-                document.getElementById('lastSave').textContent = this.getTimeSinceLastSave();
-                
-                // Update inventory
-                const inventoryDiv = document.getElementById('inventory');
-                inventoryDiv.innerHTML = '';
-                
-                Object.entries(this.inventory).forEach(([plant, count]) => {
-                    const plantData = PLANTS[plant];
-                    const item = document.createElement('div');
-                    item.className = 'inventoryItem';
-                    if (this.selectedItem === plant) {
-                        item.classList.add('selected');
-                    }
-                    item.innerHTML = `
-                        <span class="emoji">${plantData.emoji}</span>
-                        <div>${plantData.name}</div>
-                        <div class="count">x${count}</div>
-                    `;
-                    item.onclick = () => {
-                        this.selectedItem = this.selectedItem === plant ? null : plant;
-                        this.updateUI();
-                    };
-                    inventoryDiv.appendChild(item);
-                });
-                
-                // Update plot info
-                const plot = this.getPlot(this.character.x, this.character.y);
-                const plotInfo = document.getElementById('plotInfo');
-                if (plot) {
-                    let info = `Position: (${plot.x}, ${plot.y})<br>`;
-                    info += `Tilled: ${plot.tilled ? 'Yes' : 'No'}<br>`;
-                    if (plot.plant) {
-                        const plantData = PLANTS[plot.plant];
-                        info += `Plant: ${plantData.name}<br>`;
-                        info += `Growth: ${Math.floor(plot.growthStage)}/${plantData.growthTime}<br>`;
-                        info += `Health: ${plot.health}%<br>`;
-                        info += `Watered: ${plot.watered ? 'Yes' : 'No'}<br>`;
-                        
-                        // Show companion/antagonist info
-                        if (plot.companionBonus > 0) {
-                            info += `<span style="color: green;">💚 Companion Bonus: +${plot.companionBonus * 20}% growth</span><br>`;
-                        }
-                        if (plot.antagonistPenalty > 0) {
-                            info += `<span style="color: red;">⚠️ Antagonist Penalty: -${plot.antagonistPenalty * 15}% growth</span><br>`;
-                        }
-                        
-                        info += `Ready: ${plot.harvestReady ? 'Yes! 🌟' : 'No'}`;
-                        
-                        // Show companion recommendations
-                        if (plantData.companions && plantData.companions.length > 0) {
-                            info += `<br><br><strong>Good Companions:</strong><br>`;
-                            const validCompanions = plantData.companions.filter(comp => PLANTS[comp]);
-                            validCompanions.slice(0, 5).forEach(comp => {
-                                info += `${PLANTS[comp].emoji} ${PLANTS[comp].name} `;
-                            });
-                            if (validCompanions.length > 5) {
-                                info += `+${validCompanions.length - 5} more`;
-                            }
-                        }
-                        
-                        if (plantData.antagonists && plantData.antagonists.length > 0) {
-                            info += `<br><strong>Avoid Near:</strong><br>`;
-                            const validAntagonists = plantData.antagonists.filter(ant => PLANTS[ant]);
-                            validAntagonists.slice(0, 3).forEach(ant => {
-                                info += `${PLANTS[ant].emoji} ${PLANTS[ant].name} `;
-                            });
-                            if (validAntagonists.length > 3) {
-                                info += `+${validAntagonists.length - 3} more`;
-                            }
-                        }
-                    } else if (this.selectedItem && PLANTS[this.selectedItem]) {
-                        // Show companion info for selected seed
-                        const plantData = PLANTS[this.selectedItem];
-                        info += `<br><strong>Selected: ${plantData.name}</strong><br>`;
-                        
-                        if (plantData.companions && plantData.companions.length > 0) {
-                            info += `<br>Good Companions:<br>`;
-                            const validCompanions = plantData.companions.filter(comp => PLANTS[comp]);
-                            validCompanions.slice(0, 5).forEach(comp => {
-                                info += `${PLANTS[comp].emoji} ${PLANTS[comp].name} `;
-                            });
-                            if (validCompanions.length > 5) {
-                                info += `...`;
-                            }
-                        }
-                        
-                        if (plantData.antagonists && plantData.antagonists.length > 0) {
-                            info += `<br>Avoid Near:<br>`;
-                            const validAntagonists = plantData.antagonists.filter(ant => PLANTS[ant]);
-                            validAntagonists.slice(0, 3).forEach(ant => {
-                                info += `${PLANTS[ant].emoji} ${PLANTS[ant].name} `;
-                            });
-                            if (validAntagonists.length > 3) {
-                                info += `...`;
-                            }
-                        }
-                    }
-                    plotInfo.innerHTML = info;
-                }
-                
-                // Update expand button
-                document.getElementById('expandBtn').disabled = this.coins < 500 || this.gridSize >= 15;
-            }
-
-            draw() {
-                // Clear canvas
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw plots
-                this.plots.forEach(plot => plot.draw(this.ctx, TILE_SIZE));
-                
-                // Draw character
-                this.character.draw(this.ctx, TILE_SIZE);
-                
-                // Draw selection highlight
-                this.ctx.strokeStyle = 'yellow';
-                this.ctx.lineWidth = 3;
-                this.ctx.strokeRect(
-                    this.character.x * TILE_SIZE,
-                    this.character.y * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE
-                );
-            }
-
-            gameLoop() {
-                this.draw();
-                requestAnimationFrame(() => this.gameLoop());
-            }
-
-            // Save System Methods
-            saveGame() {
-                try {
-                    const saveData = {
-                        version: '1.3',  // Updated for 55 plants
-                        timestamp: Date.now(),
-                        character: {
-                            x: this.character.x,
-                            y: this.character.y,
-                            energy: this.character.energy
-                        },
-                        game: {
-                            coins: this.coins,
-                            day: this.day,
-                            season: this.season,
-                            gridSize: this.gridSize,
-                            selectedItem: this.selectedItem
-                        },
-                        inventory: this.inventory,
-                        plots: this.plots.map(plot => ({
-                            x: plot.x,
-                            y: plot.y,
-                            tilled: plot.tilled,
-                            plant: plot.plant,
-                            growthStage: plot.growthStage,
-                            watered: plot.watered,
-                            daysWithoutWater: plot.daysWithoutWater,
-                            health: plot.health,
-                            harvestReady: plot.harvestReady,
-                            companionBonus: plot.companionBonus || 0,
-                            antagonistPenalty: plot.antagonistPenalty || 0
-                        }))
-                    };
-                    
-                    localStorage.setItem('canaFarmSave', JSON.stringify(saveData));
-                    
-                    // Show save indicator
-                    const indicator = document.getElementById('saveIndicator');
-                    indicator.style.display = 'block';
-                    indicator.innerHTML = '✅ Saved!';
-                    setTimeout(() => {
-                        indicator.style.display = 'none';
-                    }, 2000);
-                    
-                    return true;
-                } catch (error) {
-                    console.error('Failed to save game:', error);
-                    
-                    // Show error indicator
-                    const indicator = document.getElementById('saveIndicator');
-                    indicator.style.display = 'block';
-                    indicator.style.background = 'rgba(244, 67, 54, 0.9)';
-                    indicator.innerHTML = '❌ Save failed!';
-                    setTimeout(() => {
-                        indicator.style.display = 'none';
-                        indicator.style.background = 'rgba(76, 175, 80, 0.9)';
-                    }, 2000);
-                    
-                    return false;
-                }
-            }
-
-            loadGame() {
-                try {
-                    const saveString = localStorage.getItem('canaFarmSave');
-                    if (!saveString) return false;
-                    
-                    const saveData = JSON.parse(saveString);
-                    
-                    // Restore character
-                    this.character.x = saveData.character.x;
-                    this.character.y = saveData.character.y;
-                    this.character.energy = saveData.character.energy;
-                    
-                    // Restore game state
-                    this.coins = saveData.game.coins;
-                    this.day = saveData.game.day;
-                    this.season = saveData.game.season;
-                    this.gridSize = saveData.game.gridSize;
-                    this.selectedItem = saveData.game.selectedItem;
-                    
-                    // Restore inventory
-                    this.inventory = saveData.inventory;
-                    
-                    // Restore plots
-                    this.plots = saveData.plots.map(plotData => {
-                        const plot = new Plot(plotData.x, plotData.y);
-                        plot.tilled = plotData.tilled;
-                        plot.plant = plotData.plant;
-                        plot.growthStage = plotData.growthStage;
-                        plot.watered = plotData.watered;
-                        plot.daysWithoutWater = plotData.daysWithoutWater;
-                        plot.health = plotData.health;
-                        plot.harvestReady = plotData.harvestReady;
-                        plot.companionBonus = plotData.companionBonus || 0;
-                        plot.antagonistPenalty = plotData.antagonistPenalty || 0;
-                        return plot;
-                    });
-                    
-                    // Resize canvas if needed
-                    if (this.gridSize !== INITIAL_GRID_SIZE) {
-                        this.canvas.width = this.gridSize * TILE_SIZE;
-                        this.canvas.height = this.gridSize * TILE_SIZE;
-                    }
-                    
-                    return true;
-                } catch (error) {
-                    console.error('Failed to load game:', error);
-                    return false;
-                }
-            }
-
-            deleteSave() {
-                if (confirm('Are you sure you want to delete your save and start over?')) {
-                    localStorage.removeItem('canaFarmSave');
-                    location.reload();
-                }
-            }
-
-            exportSave() {
-                const saveString = localStorage.getItem('canaFarmSave');
-                if (saveString) {
-                    const blob = new Blob([saveString], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `cana-farm-save-${Date.now()}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    this.showTooltip('Save exported successfully!');
-                } else {
-                    this.showTooltip('No save data found!');
-                }
-            }
-
-            importSave(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const saveData = JSON.parse(e.target.result);
-                        localStorage.setItem('canaFarmSave', e.target.result);
-                        location.reload();
-                    } catch (error) {
-                        this.showTooltip('Invalid save file!');
-                    }
-                };
-                reader.readAsText(file);
-            }
-
-            setupAutoSave() {
-                // Auto-save every 30 seconds
-                setInterval(() => {
-                    if (this.saveGame()) {
-                        console.log('Auto-saved at', new Date().toLocaleTimeString());
-                    }
-                }, 30000);
-                
-                // Save on important actions
-                const originalAdvanceDay = this.advanceDay.bind(this);
-                this.advanceDay = () => {
-                    originalAdvanceDay();
-                    this.saveGame();
-                };
-                
-                const originalExpandLand = this.expandLand.bind(this);
-                this.expandLand = () => {
-                    originalExpandLand();
-                    this.saveGame();
-                };
-                
-                const originalBuySeeds = this.buySeeds.bind(this);
-                this.buySeeds = (plantType) => {
-                    originalBuySeeds(plantType);
-                    this.saveGame();
-                };
-                
-                // Save on harvest
-                const originalHarvestPlot = this.harvestPlot.bind(this);
-                this.harvestPlot = () => {
-                    originalHarvestPlot();
-                    this.saveGame();
-                };
-                
-                // Save before page unload
-                window.addEventListener('beforeunload', () => {
-                    this.saveGame();
-                });
-            }
-
-            getTimeSinceLastSave() {
-                try {
-                    const saveString = localStorage.getItem('canaFarmSave');
-                    if (!saveString) return 'Never';
-                    
-                    const saveData = JSON.parse(saveString);
-                    const timeDiff = Date.now() - saveData.timestamp;
-                    const seconds = Math.floor(timeDiff / 1000);
-                    
-                    if (seconds < 60) return `${seconds}s ago`;
-                    const minutes = Math.floor(seconds / 60);
-                    if (minutes < 60) return `${minutes}m ago`;
-                    const hours = Math.floor(minutes / 60);
-                    if (hours < 24) return `${hours}h ago`;
-                    const days = Math.floor(hours / 24);
-                    return `${days}d ago`;
-                } catch {
-                    return 'Unknown';
-                }
-            }
-        }
-
-        // Start the game
-        let game;
-        let weather = new WeatherSystem();
-        window.onload = () => {
-            game = new FarmGame();
-            game.updateUI();
+        
+        // Initialize game
+        function initGame() {
+            // Load saved state
+            gameState.load();
             
-            // Update save time display every 5 seconds
-            setInterval(() => {
-                const lastSaveElement = document.getElementById('lastSave');
-                if (lastSaveElement) {
-                    lastSaveElement.textContent = game.getTimeSinceLastSave();
+            // Display all plants
+            displayPlants();
+            
+            // Draw farm
+            drawFarm();
+            
+            // Update UI
+            updateStats();
+            
+            showStatus('Game loaded with 369 plants!');
+        }
+        
+        // Display plant database
+        function displayPlants() {
+            const plantList = document.getElementById('plantList');
+            plantList.innerHTML = '';
+            
+            let plantCount = 0;
+            Object.entries(PLANT_DATABASE.families).forEach(([family, plants]) => {
+                Object.entries(plants).forEach(([key, plant]) => {
+                    const div = document.createElement('div');
+                    div.className = 'plantItem';
+                    div.innerHTML = plant.emoji + '<br>' + plant.name + '<br>$' + plant.seedCost;
+                    div.onclick = () => selectPlant(key, plant);
+                    plantList.appendChild(div);
+                    plantCount++;
+                });
+            });
+            
+            document.getElementById('plantCount').textContent = plantCount;
+        }
+        
+        // Select plant
+        function selectPlant(key, plant) {
+            selectedPlantKey = key;
+            document.getElementById('selectedPlant').textContent = plant.name;
+            document.querySelectorAll('.plantItem').forEach(el => el.classList.remove('selected'));
+            event.target.closest('.plantItem').classList.add('selected');
+        }
+        
+        // Draw farm grid
+        function drawFarm() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    // Draw tile
+                    ctx.fillStyle = '#8bc34a';
+                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    
+                    // Draw grid
+                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
-            }, 5000);
+            }
+            
+            // Draw selection
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(currentX * TILE_SIZE, currentY * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+        
+        // Canvas click
+        canvas.onclick = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            currentX = Math.floor((e.clientX - rect.left) / TILE_SIZE);
+            currentY = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+            drawFarm();
         };
+        
+        // Game actions
+        function plantSelected() {
+            if (selectedPlantKey) {
+                showStatus('Planted ' + selectedPlantKey);
+                saveGame();
+            }
+        }
+        
+        function waterPlot() {
+            showStatus('Watered plot');
+        }
+        
+        function harvestPlot() {
+            showStatus('Harvested crop');
+            gameState.economy.coins += 50;
+            updateStats();
+        }
+        
+        function saveGame() {
+            gameState.save();
+            showStatus('Game saved!');
+        }
+        
+        function nextDay() {
+            const seasons = ['Spring', 'Summer', 'Fall', 'Winter'];
+            const currentSeason = document.getElementById('season').textContent;
+            const day = parseInt(document.getElementById('day').textContent);
+            
+            document.getElementById('day').textContent = day + 1;
+            if (day % 30 === 0) {
+                const idx = seasons.indexOf(currentSeason);
+                document.getElementById('season').textContent = seasons[(idx + 1) % 4];
+            }
+            
+            showStatus('Advanced to day ' + (day + 1));
+            saveGame();
+        }
+        
+        // Marketplace functions
+        function openMarketplace() {
+            const listings = marketplace.getActiveListings();
+            showStatus('Marketplace: ' + listings.length + ' active listings');
+        }
+        
+        function createListing() {
+            marketplace.createListing(gameState.playerId, 'tomato', 10, 50);
+            showStatus('Created listing!');
+        }
+        
+        // Update stats
+        function updateStats() {
+            document.getElementById('coins').textContent = gameState.economy.coins;
+            document.getElementById('cana').textContent = gameState.economy.canaTokens;
+        }
+        
+        // Show status message
+        function showStatus(message) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Start game
+        window.onload = initGame;
     </script>
-<script src="fix_buttons.js"></script>
 </body>
 </html>
-<script src="medicinal_plants_complete.js"></script>
-<script>
-// Safely merge medicinal plants with existing plants
-if (typeof MEDICINAL_PLANTS_DB !== 'undefined') {
-    Object.keys(MEDICINAL_PLANTS_DB).forEach(function(key) {
-        if (!PLANTS[key]) {
-            PLANTS[key] = MEDICINAL_PLANTS_DB[key];
-        }
-    });
-    console.log('Added ' + Object.keys(MEDICINAL_PLANTS_DB).length + ' medicinal plants!');
-}
-</script>
