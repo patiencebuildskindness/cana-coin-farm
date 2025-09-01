@@ -2072,3 +2072,15 @@
     </script>
 </body>
 </html>
+<script src="medicinal_plants_complete.js"></script>
+<script>
+// Safely merge medicinal plants with existing plants
+if (typeof MEDICINAL_PLANTS_DB !== 'undefined') {
+    Object.keys(MEDICINAL_PLANTS_DB).forEach(function(key) {
+        if (!PLANTS[key]) {
+            PLANTS[key] = MEDICINAL_PLANTS_DB[key];
+        }
+    });
+    console.log('Added ' + Object.keys(MEDICINAL_PLANTS_DB).length + ' medicinal plants!');
+}
+</script>
