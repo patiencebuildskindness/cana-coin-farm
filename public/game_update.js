@@ -101,3 +101,81 @@ window.uploadGrowthPhoto = function() {
 setTimeout(() => {
     displayWeather();
 }, 1000);
+
+// Friends list UI
+window.showFriendsList = function() {
+    const friends = multiplayerVisit.getFriends();
+    
+    const friendsUI = document.createElement('div');
+    friendsUI.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:20px;box-shadow:0 0 30px rgba(0,0,0,0.3);z-index:2000;';
+    
+    friendsUI.innerHTML = '<h2>👥 Friends List</h2>';
+    
+    // Add friend code display
+    friendsUI.innerHTML += '<div style="background:#e3f2fd;padding:10px;border-radius:10px;margin:10px 0;">' +
+                          'Your Farm Code: <b>' + multiplayerVisit.myFarmId + '</b>' +
+                          '<button onclick="copyFarmCode()">📋 Copy</button></div>';
+    
+    // Add friend input
+    friendsUI.innerHTML += '<input type="text" id="friendCodeInput" placeholder="Enter friend code...">' +
+                          '<button onclick="addFriendByCode()">Add Friend</button>';
+    
+    // List friends
+    if (friends.length === 0) {
+        friendsUI.innerHTML += '<p>No friends yet. Share your farm code!</p>';
+    } else {
+        friendsUI.innerHTML += '<h3>Your Friends:</h3>';
+        friends.forEach(friend => {
+            friendsUI.innerHTML += '<div style="margin:10px;padding:10px;border:1px solid #ddd;border-radius:10px;">' +
+                                 friend + 
+                                 '<button onclick="multiplayerVisit.visitFarm(\'' + friend + '\')">Visit Farm</button>' +
+                                 '</div>';
+        });
+    }
+    
+    friendsUI.innerHTML += '<button onclick="this.parentElement.remove()">Close</button>';
+    document.body.appendChild(friendsUI);
+};
+
+// Copy farm code
+window.copyFarmCode = function() {
+    navigator.clipboard.writeText(multiplayerVisit.myFarmId);
+    showStatus('Farm code copied!');
+};
+
+// Add friend by code
+window.addFriendByCode = function() {
+    const input = document.getElementById('friendCodeInput');
+    if (input && input.value) {
+        if (multiplayerVisit.addFriend(input.value)) {
+            showStatus('Friend added!');
+            showFriendsList(); // Refresh
+        }
+    }
+};
+
+// Show competitions
+window.showCompetitions = function() {
+    const compUI = document.createElement('div');
+    compUI.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:20px;box-shadow:0 0 30px rgba(0,0,0,0.3);z-index:2000;';
+    
+    compUI.innerHTML = '<h2>🏆 Competitions</h2>';
+    
+    // Create sample competitions if none exist
+    if (competitionSystem.activeCompetitions.length === 0) {
+        competitionSystem.createCompetition('daily');
+        competitionSystem.createCompetition('weekly');
+    }
+    
+    competitionSystem.activeCompetitions.forEach(comp => {
+        compUI.innerHTML += '<div style="margin:10px;padding:10px;border:2px solid #ffd700;border-radius:10px;">' +
+                          '<h3>' + comp.name + '</h3>' +
+                          '<p>Reward: ' + comp.reward + ' CANA</p>' +
+                          '<p>Participants: ' + comp.participants.length + '</p>' +
+                          '<button onclick="competitionSystem.joinCompetition(' + comp.id + ')">Join Competition</button>' +
+                          '</div>';
+    });
+    
+    compUI.innerHTML += '<button onclick="this.parentElement.remove()">Close</button>';
+    document.body.appendChild(compUI);
+};
