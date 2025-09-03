@@ -1,4 +1,9 @@
 // Game updates for weather and PoG integration
+// Fix the plant database reference
+if (window.plants && !window.PLANT_DATABASE) {
+    window.PLANT_DATABASE = window.plants;
+    console.log("✅ Connected PLANT_DATABASE to window.plants");
+}
 
 // Update biome based on location
 window.updateBiome = function(biome) {
