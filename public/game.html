@@ -1331,7 +1331,41 @@
         // Auto-save every 30 seconds
         setInterval(saveGame, 30000);
     </script>
-      <script src="saveSystem.js"></script>
-    <script src="save-integration.js"></script>
+     
+<script>
+// Simple inline save system for testing
+window.simpleSave = {
+    save: function() {
+        localStorage.setItem('canaGameState', JSON.stringify(gameState));
+        console.log('Game saved!');
+        alert('Game saved!');
+    },
+    load: function() {
+        const saved = localStorage.getItem('canaGameState');
+        if (saved) {
+            Object.assign(gameState, JSON.parse(saved));
+            updateUI();
+            initFarmGrid();
+            console.log('Game loaded!');
+            alert('Game loaded!');
+        }
+    }
+};
+
+// Add save/load buttons
+const saveBtn = document.createElement('button');
+saveBtn.textContent = '💾 Save';
+saveBtn.style.cssText = 'position:fixed;top:10px;right:100px;z-index:9999;padding:10px;background:#4CAF50;color:white;border:none;border-radius:5px;cursor:pointer';
+saveBtn.onclick = () => simpleSave.save();
+document.body.appendChild(saveBtn);
+
+const loadBtn = document.createElement('button');
+loadBtn.textContent = '📂 Load';
+loadBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;padding:10px;background:#2196F3;color:white;border:none;border-radius:5px;cursor:pointer';
+loadBtn.onclick = () => simpleSave.load();
+document.body.appendChild(loadBtn);
+
+console.log('Simple save system loaded! Use the buttons in top-right corner.');
+</script>
 </body>
 </html>
