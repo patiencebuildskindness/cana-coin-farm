@@ -1,8 +1,3 @@
-/**
- * SAVE INTEGRATION FOR CANA MEDICINAL PLANT WORLD
- * Fixed version that works with your gameState variable
- */
-
 // Wait for everything to load
 window.addEventListener('load', function() {
     console.log('[Save Integration] Initializing for CANA game...');
