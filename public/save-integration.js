@@ -1,22 +1,3 @@
-/**
- * INTEGRATION CODE FOR CANA COIN FARM SAVE SYSTEM
- * Add this code to your main game file (after your game object is defined)
- * OR save it as 'save-integration.js' and include it AFTER your main game script
- */
-
-// ============================================
-// STEP 1: ADD TO YOUR HTML FILE
-// ============================================
-/*
-Add these two lines to your HTML file, in this order:
-<script src="your-game-file.js"></script>
-<script src="saveSystem.js"></script>
-<script src="save-integration.js"></script>  <!-- This file -->
-*/
-
-// ============================================
-// STEP 2: INTEGRATION CODE
-// ============================================
 
 // Wait for everything to load
 window.addEventListener('load', function() {
