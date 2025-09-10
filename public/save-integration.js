@@ -1,350 +1,223 @@
+/**
+ * SAVE INTEGRATION FOR CANA MEDICINAL PLANT WORLD
+ * Fixed version that works with your gameState variable
+ */
 
 // Wait for everything to load
 window.addEventListener('load', function() {
-    console.log('[Save Integration] Initializing...');
+    console.log('[Save Integration] Initializing for CANA game...');
     
-    // Make sure game object exists
-    if (typeof game === 'undefined') {
-        console.error('[Save Integration] Game object not found! Make sure your game script loads first.');
-        
-        // Try to find game object in window
-        if (window.Game) {
-            window.game = window.Game;
-        } else if (window.GAME) {
-            window.game = window.GAME;
-        } else {
-            console.error('[Save Integration] Could not find game object. Save system will not work properly.');
-            return;
-        }
+    // Your game uses gameState, not game
+    if (typeof gameState === 'undefined') {
+        console.error('[Save Integration] gameState not found!');
+        return;
     }
     
-    // ============================================
-    // HOOK INTO GAME FUNCTIONS
-    // ============================================
+    // CRITICAL FIX: Map gameState to game for saveSystem compatibility
+    window.game = gameState;
     
-    // Hook into coin updates
-    if (typeof updateCoins === 'function') {
-        const originalUpdateCoins = updateCoins;
-        window.updateCoins = function(...args) {
-            const result = originalUpdateCoins.apply(this, args);
-            // Auto-save when coins change
-            if (saveSystem) {
-                console.log('[Save Integration] Coins updated, auto-saving...');
+    // Hook into your existing saveGame function
+    if (typeof saveGame === 'function') {
+        const originalSaveGame = window.saveGame;
+        window.saveGame = function() {
+            // Call original save
+            if (originalSaveGame) {
+                originalSaveGame.apply(this, arguments);
+            }
+            
+            // Also trigger saveSystem
+            if (window.saveSystem) {
+                // Update the game reference
+                window.game = gameState;
+                console.log('[Save Integration] Syncing with SaveSystem...');
+            }
+        };
+    }
+    
+    // Hook into plantCrop
+    if (typeof plantCrop === 'function') {
+        const originalPlantCrop = window.plantCrop;
+        window.plantCrop = function(...args) {
+            const result = originalPlantCrop.apply(this, args);
+            window.game = gameState; // Ensure sync
+            if (window.saveSystem) {
                 saveSystem.save();
             }
             return result;
         };
     }
     
-    // Hook into plant harvesting
-    if (typeof harvestPlant === 'function') {
-        const originalHarvest = harvestPlant;
-        window.harvestPlant = function(...args) {
-            const result = originalHarvest.apply(this, args);
-            // Auto-save after harvest
-            if (saveSystem) {
-                console.log('[Save Integration] Plant harvested, auto-saving...');
+    // Hook into harvestCrop
+    if (typeof harvestCrop === 'function') {
+        const originalHarvestCrop = window.harvestCrop;
+        window.harvestCrop = function(...args) {
+            const result = originalHarvestCrop.apply(this, args);
+            window.game = gameState; // Ensure sync
+            if (window.saveSystem) {
                 saveSystem.save();
             }
             return result;
         };
     }
     
-    // Hook into planting
-    if (typeof plantSeed === 'function') {
-        const originalPlant = plantSeed;
-        window.plantSeed = function(...args) {
-            const result = originalPlant.apply(this, args);
-            // Auto-save after planting
-            if (saveSystem) {
-                console.log('[Save Integration] Seed planted, auto-saving...');
-                saveSystem.save();
-            }
-            return result;
-        };
-    }
-    
-    // Hook into day changes
-    if (typeof nextDay === 'function') {
-        const originalNextDay = nextDay;
-        window.nextDay = function(...args) {
-            const result = originalNextDay.apply(this, args);
-            // Auto-save at end of day
-            if (saveSystem) {
-                console.log('[Save Integration] Day ended, auto-saving...');
-                saveSystem.save();
-            }
-            return result;
-        };
-    }
-    
-    // ============================================
-    // FIX GAME OBJECT REFERENCES
-    // ============================================
-    
-    // Ensure game object has all needed properties
-    if (window.game) {
-        // Initialize missing properties with defaults
-        game.character = game.character || {
+    // Fix the game object structure to match what saveSystem expects
+    window.game = {
+        // Map your gameState properties to what saveSystem expects
+        character: {
             x: 5,
             y: 5,
-            energy: 100,
-            inventory: {}
-        };
+            energy: gameState.energy || 100,
+            inventory: gameState.inventory || {}
+        },
         
-        game.grid = game.grid || {
+        // Grid data - map your plots array to grid structure
+        grid: {
             plots: []
-        };
+        },
         
-        game.inventory = game.inventory || {};
-        game.processedInventory = game.processedInventory || {};
-        game.marketPrices = game.marketPrices || {};
+        // Direct mappings
+        day: 1,
+        season: 'Spring',
+        coins: gameState.coins || 1000,
+        experience: gameState.xp || 0,
+        gridSize: 8, // Your game uses 8x8 grid
         
-        game.stats = game.stats || {
+        // Your specific game data
+        level: gameState.level || 1,
+        gems: gameState.gems || 10,
+        herbs: gameState.herbs || 0,
+        extracts: gameState.extracts || 0,
+        energy: gameState.energy || 100,
+        maxEnergy: gameState.maxEnergy || 100,
+        
+        // Map plots to grid format
+        inventory: gameState.inventory || {},
+        processedInventory: {},
+        marketPrices: {},
+        
+        stats: {
             plantsPlanted: 0,
             plantsHarvested: 0,
-            totalEarnings: 0
+            totalEarnings: 0,
+            discoveries: 0
+        },
+        
+        buildings: gameState.buildings || {},
+        achievements: [],
+        questProgress: {},
+        settings: {},
+        
+        // Keep reference to original plots
+        plots: gameState.plots || []
+    };
+    
+    // Convert plots array to grid format for saveSystem
+    const gridSize = 8;
+    for (let y = 0; y < gridSize; y++) {
+        window.game.grid.plots[y] = [];
+        for (let x = 0; x < gridSize; x++) {
+            const plotIndex = y * gridSize + x;
+            window.game.grid.plots[y][x] = {
+                x: x,
+                y: y,
+                plant: gameState.plots[plotIndex]?.plant?.name || null,
+                tilled: gameState.plots[plotIndex] !== null,
+                watered: false,
+                fertilized: false,
+                health: 100,
+                originalData: gameState.plots[plotIndex]
+            };
+        }
+    }
+    
+    // Override saveSystem's save to sync with gameState
+    if (window.saveSystem) {
+        const originalSave = saveSystem.save.bind(saveSystem);
+        saveSystem.save = function() {
+            // Sync game object with current gameState
+            window.game.coins = gameState.coins;
+            window.game.level = gameState.level;
+            window.game.experience = gameState.xp;
+            window.game.character.energy = gameState.energy;
+            window.game.herbs = gameState.herbs;
+            window.game.gems = gameState.gems;
+            window.game.extracts = gameState.extracts;
+            window.game.plots = gameState.plots;
+            
+            // Call original save
+            return originalSave();
         };
         
-        game.buildings = game.buildings || [];
-        game.achievements = game.achievements || [];
-        game.questProgress = game.questProgress || {};
-        game.settings = game.settings || {};
-        
-        // Default values if not set
-        game.day = game.day || 1;
-        game.season = game.season || 'Spring';
-        game.coins = game.coins || 100;
-        game.experience = game.experience || 0;
-        game.gridSize = game.gridSize || 10;
-        game.discoveries = game.discoveries || 0;
-        
-        console.log('[Save Integration] Game object initialized:', game);
-    }
-    
-    // ============================================
-    // INITIALIZE GRID IF NEEDED
-    // ============================================
-    
-    if (game && game.grid && !game.grid.plots.length) {
-        game.grid.plots = [];
-        for (let y = 0; y < game.gridSize; y++) {
-            game.grid.plots[y] = [];
-            for (let x = 0; x < game.gridSize; x++) {
-                game.grid.plots[y][x] = {
-                    x: x,
-                    y: y,
-                    plant: null,
-                    tilled: false,
-                    watered: false,
-                    fertilized: false,
-                    health: 100
-                };
-            }
-        }
-        console.log('[Save Integration] Grid initialized');
-    }
-    
-    // ============================================
-    // LOAD SAVED GAME ON START
-    // ============================================
-    
-    setTimeout(() => {
-        if (saveSystem) {
-            console.log('[Save Integration] Attempting to load saved game...');
-            const loaded = saveSystem.load();
+        // Override load to sync back to gameState
+        const originalLoad = saveSystem.load.bind(saveSystem);
+        saveSystem.load = function() {
+            const result = originalLoad();
             
-            if (loaded) {
-                console.log('[Save Integration] Save loaded successfully!');
+            if (result && window.game) {
+                // Sync loaded data back to gameState
+                gameState.coins = window.game.coins || gameState.coins;
+                gameState.level = window.game.level || gameState.level;
+                gameState.xp = window.game.experience || gameState.xp;
+                gameState.energy = window.game.character?.energy || gameState.energy;
+                gameState.herbs = window.game.herbs || gameState.herbs;
+                gameState.gems = window.game.gems || gameState.gems;
+                gameState.extracts = window.game.extracts || gameState.extracts;
                 
-                // Refresh display
-                if (typeof renderGame === 'function') {
-                    renderGame();
-                } else if (typeof updateDisplay === 'function') {
-                    updateDisplay();
-                } else if (typeof draw === 'function') {
-                    draw();
+                // Update UI with loaded values
+                if (typeof updateUI === 'function') {
+                    updateUI();
                 }
                 
-                // Update UI elements
-                updateUIElements();
-            } else {
-                console.log('[Save Integration] No save found, starting new game');
+                // Reinitialize farm grid with loaded data
+                if (typeof initFarmGrid === 'function') {
+                    initFarmGrid();
+                }
             }
-        }
-    }, 100);
-    
-    // ============================================
-    // UI UPDATE HELPER
-    // ============================================
-    
-    function updateUIElements() {
-        // Update coin display
-        const coinElements = document.querySelectorAll('#coins, .coins, .coin-display, .balance');
-        coinElements.forEach(el => {
-            if (game && game.coins !== undefined) {
-                el.textContent = game.coins;
-            }
-        });
+            
+            return result;
+        };
         
-        // Update day display
-        const dayElements = document.querySelectorAll('#day, .day, .day-display');
-        dayElements.forEach(el => {
-            if (game && game.day !== undefined) {
-                el.textContent = 'Day ' + game.day;
-            }
-        });
-        
-        // Update season display
-        const seasonElements = document.querySelectorAll('#season, .season, .season-display');
-        seasonElements.forEach(el => {
-            if (game && game.season) {
-                el.textContent = game.season;
-            }
-        });
-        
-        // Update energy display
-        const energyElements = document.querySelectorAll('#energy, .energy, .energy-display');
-        energyElements.forEach(el => {
-            if (game && game.character && game.character.energy !== undefined) {
-                el.textContent = game.character.energy;
-            }
-        });
-        
-        // Update inventory displays
-        if (typeof updateInventoryDisplay === 'function') {
-            updateInventoryDisplay();
+        // Initialize the save system UI
+        console.log('[Save Integration] Initializing SaveSystem UI...');
+        if (!document.getElementById('save-system-ui')) {
+            saveSystem.createUI();
         }
     }
     
-    // ============================================
-    // ADD SAVE TRIGGERS TO COMMON EVENTS
-    // ============================================
-    
-    // Save when clicking important buttons
-    document.addEventListener('click', function(e) {
-        const target = e.target;
-        
-        // Check if clicked element is an important action
-        const importantSelectors = [
-            '.harvest', '.plant', '.water', '.till',
-            '.buy', '.sell', '.upgrade', '.purchase',
-            '.claim', '.collect', '.complete',
-            'button[onclick*="harvest"]',
-            'button[onclick*="plant"]',
-            'button[onclick*="buy"]',
-            'button[onclick*="sell"]'
-        ];
-        
-        const isImportant = importantSelectors.some(selector => 
-            target.matches(selector) || target.closest(selector)
-        );
-        
-        if (isImportant) {
-            setTimeout(() => {
-                if (saveSystem) {
-                    console.log('[Save Integration] Important action detected, saving...');
-                    saveSystem.save();
-                }
-            }, 100);
-        }
-    });
-    
-    // ============================================
-    // CANVAS CLICK HANDLER (for farming games)
-    // ============================================
-    
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-        canvas.addEventListener('click', function() {
-            // Save after canvas interactions
-            setTimeout(() => {
-                if (saveSystem) {
-                    saveSystem.save();
-                }
-            }, 500);
-        });
-    }
-    
-    // ============================================
-    // PERIODIC SAVE (backup to auto-save)
-    // ============================================
-    
-    setInterval(() => {
-        if (saveSystem && game) {
-            console.log('[Save Integration] Periodic save...');
-            saveSystem.save();
-        }
-    }, 120000); // Every 2 minutes
-    
-    // ============================================
-    // SAVE ON PAGE VISIBILITY CHANGE
-    // ============================================
-    
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden && saveSystem) {
-            console.log('[Save Integration] Page hidden, saving...');
-            saveSystem.save();
-        }
-    });
-    
-    // ============================================
-    // MOBILE/TABLET SUPPORT
-    // ============================================
-    
-    // Save on touch events for mobile
-    let touchTimeout;
-    document.addEventListener('touchend', function(e) {
-        clearTimeout(touchTimeout);
-        touchTimeout = setTimeout(() => {
-            if (saveSystem && game) {
-                saveSystem.save();
+    // Debug check
+    setTimeout(() => {
+        if (!document.getElementById('save-system-ui')) {
+            console.error('[Save Integration] Save UI not created! Attempting manual creation...');
+            if (window.saveSystem && typeof saveSystem.createUI === 'function') {
+                saveSystem.createUI();
             }
-        }, 5000); // Save 5 seconds after last touch
-    });
+        } else {
+            console.log('[Save Integration] ✅ Save UI is visible!');
+        }
+    }, 1000);
     
     console.log('[Save Integration] ✅ Integration complete!');
-    console.log('[Save Integration] Save system is ready to use.');
-    console.log('[Save Integration] Commands: saveSystem.save(), saveSystem.load()');
+    console.log('[Save Integration] The save UI should appear in top-right corner');
 });
 
-// ============================================
-// GLOBAL ERROR HANDLER (prevents save corruption)
-// ============================================
-
-window.addEventListener('error', function(e) {
-    console.error('[Save Integration] Error detected:', e.error);
-    
-    // Try to save game state before crash
-    if (saveSystem && game) {
-        try {
-            console.log('[Save Integration] Attempting emergency save...');
+// Add keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // Ctrl+S to save
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (window.saveSystem) {
+            window.game = gameState; // Ensure sync
             saveSystem.save();
-        } catch (saveError) {
-            console.error('[Save Integration] Emergency save failed:', saveError);
+        }
+    }
+    
+    // Ctrl+L to load
+    if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+        e.preventDefault();
+        if (window.saveSystem) {
+            saveSystem.load();
         }
     }
 });
 
-// ============================================
-// HELPER FUNCTION FOR DEBUGGING
-// ============================================
-
-window.debugSave = function() {
-    console.log('=== SAVE SYSTEM DEBUG ===');
-    console.log('Game object:', window.game);
-    console.log('SaveSystem:', window.saveSystem);
-    
-    if (localStorage.getItem('CANAFarmSave')) {
-        const save = JSON.parse(localStorage.getItem('CANAFarmSave'));
-        console.log('Current save:', save);
-        console.log('Save date:', save.saveDate);
-        console.log('Game state:', save.gameState);
-    } else {
-        console.log('No save found in localStorage');
-    }
-    
-    console.log('=========================');
-};
-
-console.log('[Save Integration] Script loaded! The save system will initialize when the page loads.');
+console.log('[Save Integration] Script loaded! Waiting for page load...');
